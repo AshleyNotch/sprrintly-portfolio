@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef, useCallback } from "react";
 import logoUrl from "@/assets/logo.avif";
-import { supabase, dbToProject, projectToDb, fetchSettings, saveSettings } from "@/lib/supabase";
+import { supabase, dbToProject, projectToDb, fetchSettings, saveSettings, parseCategoryList, DEFAULT_CATEGORIES } from "@/lib/supabase";
 import type { DbProject, SiteSettings } from "@/lib/supabase";
 import { projects as fallbackProjects, CATEGORIES } from "@/data/projects";
 import type { Project } from "@/data/projects";
@@ -108,6 +108,11 @@ function ProjectsTab() {
   const [isNew, setIsNew] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [availableCategories, setAvailableCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+
+  useEffect(() => {
+    fetchSettings().then((s) => setAvailableCategories(parseCategoryList(s.category_list)));
+  }, []);
 
   const load = async () => {
     setLoading(true);
@@ -281,6 +286,7 @@ function ProjectsTab() {
           isNew={isNew}
           onSave={handleSave}
           onClose={() => setDialogOpen(false)}
+          availableCategories={availableCategories}
         />
       )}
     </>
@@ -296,9 +302,10 @@ interface ProjectDialogProps {
   isNew: boolean;
   onSave: (p: Project) => void;
   onClose: () => void;
+  availableCategories: string[];
 }
 
-function ProjectDialog({ project, isNew, onSave, onClose }: ProjectDialogProps) {
+function ProjectDialog({ project, isNew, onSave, onClose, availableCategories }: ProjectDialogProps) {
   const [p, setP] = useState<Project>(project);
   const [saving, setSaving] = useState(false);
   const [toolsInput, setToolsInput] = useState(project.tools.join(", "));
@@ -366,7 +373,7 @@ function ProjectDialog({ project, isNew, onSave, onClose }: ProjectDialogProps) 
             </Field>
             <Field label="Categories">
               <div className="flex flex-wrap gap-2 pt-1">
-                {CATEGORIES.filter((c) => c !== "All").map((c) => {
+                {availableCategories.map((c) => {
                   const selected = p.categories.includes(c);
                   return (
                     <button
@@ -473,6 +480,7 @@ function SettingsTab() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [newCat, setNewCat] = useState("");
 
   useEffect(() => {
     fetchSettings().then((s) => {
@@ -480,6 +488,21 @@ function SettingsTab() {
       setLoading(false);
     });
   }, []);
+
+  const categories = parseCategoryList(settings.category_list);
+
+  const addCategory = () => {
+    const trimmed = newCat.trim();
+    if (!trimmed || categories.includes(trimmed)) return;
+    const updated = [...categories, trimmed];
+    setSettings((s) => ({ ...s, category_list: JSON.stringify(updated) }));
+    setNewCat("");
+  };
+
+  const removeCategory = (cat: string) => {
+    const updated = categories.filter((c) => c !== cat);
+    setSettings((s) => ({ ...s, category_list: JSON.stringify(updated) }));
+  };
 
   const set = (key: keyof SiteSettings, value: string) =>
     setSettings((prev) => ({ ...prev, [key]: value }));
@@ -592,6 +615,48 @@ function SettingsTab() {
               placeholder="Built for ANZ startups."
             />
           </Field>
+        </Section>
+
+        <Section title="Categories">
+          <p className="text-xs text-muted-foreground -mt-1">
+            These appear as filter chips on the portfolio and in the project editor.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {categories.map((cat) => (
+              <span
+                key={cat}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-sm"
+              >
+                {cat}
+                <button
+                  type="button"
+                  onClick={() => removeCategory(cat)}
+                  className="text-muted-foreground hover:text-destructive transition text-base leading-none"
+                  aria-label={`Remove ${cat}`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newCat}
+              onChange={(e) => setNewCat(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCategory(); } }}
+              placeholder="New category name…"
+              className="flex-1 rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <button
+              type="button"
+              onClick={addCategory}
+              disabled={!newCat.trim()}
+              className="rounded-xl bg-foreground text-background px-4 py-2.5 text-sm font-medium hover:opacity-90 transition disabled:opacity-40"
+            >
+              Add
+            </button>
+          </div>
         </Section>
       </div>
     </div>

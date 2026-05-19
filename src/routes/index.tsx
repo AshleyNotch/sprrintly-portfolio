@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { projects as fallbackProjects, CATEGORIES, type Project } from "@/data/projects";
+import { projects as fallbackProjects, type Project } from "@/data/projects";
 import { ProjectModal } from "@/components/ProjectModal";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TickerSection } from "@/components/Ticker";
-import { supabase, dbToProject, fetchSettings } from "@/lib/supabase";
+import { supabase, dbToProject, fetchSettings, parseCategoryList, DEFAULT_CATEGORIES } from "@/lib/supabase";
 import type { DbProject, SiteSettings } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { parseVideoUrl } from "@/lib/video";
@@ -26,12 +26,13 @@ function injectFont(family: string) {
 }
 
 function PortfolioPage() {
-  const [filter, setFilter] = useState<(typeof CATEGORIES)[number]>("All");
+  const [filter, setFilter] = useState("All");
   const [active, setActive] = useState<Project | null>(null);
   const [open, setOpen] = useState(false);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<Partial<SiteSettings>>({});
+  const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
 
   useEffect(() => {
     Promise.all([
@@ -39,7 +40,10 @@ function PortfolioPage() {
       fetchSettings(),
     ]).then(([{ data }, s]) => {
       setProjects(data && data.length > 0 ? (data as DbProject[]).map(dbToProject) : fallbackProjects);
-      if (Object.keys(s).length > 0) setSettings(s);
+      if (Object.keys(s).length > 0) {
+        setSettings(s);
+        setCategories(parseCategoryList(s.category_list));
+      }
       setLoading(false);
     }).catch(() => {
       setProjects(fallbackProjects);
@@ -108,7 +112,7 @@ function PortfolioPage() {
       {/* Filter pills */}
       <section className="mx-auto max-w-6xl px-6">
         <div className="flex flex-wrap gap-2">
-          {CATEGORIES.map((c) => {
+          {["All", ...categories].map((c) => {
             const isActive = filter === c;
             return (
               <button

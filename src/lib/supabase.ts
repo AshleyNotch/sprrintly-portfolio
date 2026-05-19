@@ -36,7 +36,15 @@ export type SiteSettings = {
   font_body: string;
   font_heading: string;
   footer_text: string;
+  category_list: string; // JSON array stored as string
 };
+
+export const DEFAULT_CATEGORIES = ["Web Design", "UI/UX", "Branding", "Pitch Deck", "Motion", "Framer"];
+
+export function parseCategoryList(raw: string | undefined): string[] {
+  if (!raw) return DEFAULT_CATEGORIES;
+  try { return JSON.parse(raw) as string[]; } catch { return DEFAULT_CATEGORIES; }
+}
 
 export function dbToProject(p: DbProject): Project {
   return {
