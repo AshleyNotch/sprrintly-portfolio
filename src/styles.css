@@ -168,9 +168,6 @@
 }
 .ticker-track.to-right { animation-name: ticker-right; }
 .ticker-track.to-left  { animation-name: ticker-left; }
-.ticker-wrap:hover .ticker-track {
-  animation-duration: 200s !important;
-}
 
 .nav-pill-link {
   padding: 6px 12px;

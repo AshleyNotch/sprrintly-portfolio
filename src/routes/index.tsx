@@ -28,23 +28,21 @@ function PortfolioPage() {
   const [filter, setFilter] = useState<(typeof CATEGORIES)[number]>("All");
   const [active, setActive] = useState<Project | null>(null);
   const [open, setOpen] = useState(false);
-  const [projects, setProjects] = useState<Project[]>(fallbackProjects);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<Partial<SiteSettings>>({});
 
-  /* Load projects + settings from Supabase, fall back to hardcoded if empty */
   useEffect(() => {
-    supabase
-      .from("projects")
-      .select("*")
-      .order("sort_order")
-      .then(({ data }) => {
-        if (data && data.length > 0) {
-          setProjects((data as DbProject[]).map(dbToProject));
-        }
-      });
-
-    fetchSettings().then((s) => {
+    Promise.all([
+      supabase.from("projects").select("*").order("sort_order"),
+      fetchSettings(),
+    ]).then(([{ data }, s]) => {
+      setProjects(data && data.length > 0 ? (data as DbProject[]).map(dbToProject) : fallbackProjects);
       if (Object.keys(s).length > 0) setSettings(s);
+      setLoading(false);
+    }).catch(() => {
+      setProjects(fallbackProjects);
+      setLoading(false);
     });
   }, []);
 
@@ -136,7 +134,20 @@ function PortfolioPage() {
 
       {/* Grid */}
       <section className="mx-auto max-w-6xl px-6 py-10 pb-24">
-        <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2">
+        {loading && (
+          <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2">
+            {[...Array(6)].map((_, i) => (
+              <div key={i}>
+                <div className="rounded-2xl bg-muted aspect-[16/11] animate-pulse" />
+                <div className="mt-4 space-y-2">
+                  <div className="h-4 bg-muted rounded-full w-2/3 animate-pulse" />
+                  <div className="h-3 bg-muted rounded-full w-1/3 animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {!loading && <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2">
           {filtered.map((p) => (
             <button
               key={p.id}
@@ -185,9 +196,9 @@ function PortfolioPage() {
               </div>
             </button>
           ))}
-        </div>
+        </div>}
 
-        {filtered.length === 0 && (
+        {!loading && filtered.length === 0 && (
           <p className="text-center text-muted-foreground py-20">
             No projects in this category yet.
           </p>

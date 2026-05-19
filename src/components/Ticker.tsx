@@ -1,4 +1,5 @@
-// Images auto-loaded from src/assets/ticker/ — just drop files in and rebuild
+import { useEffect, useRef } from "react";
+
 const tickerModules = import.meta.glob("../assets/ticker/*.{jpg,jpeg,png,avif,webp,gif}", {
   eager: true,
   import: "default",
@@ -6,7 +7,6 @@ const tickerModules = import.meta.glob("../assets/ticker/*.{jpg,jpeg,png,avif,we
 
 const TICKER_IMAGES = Object.values(tickerModules) as string[];
 
-// Split images across 3 rows (cycle if fewer than needed)
 function getRow(rowIndex: number): string[] {
   if (TICKER_IMAGES.length === 0) return [];
   const row: string[] = [];
@@ -22,14 +22,37 @@ interface TickerRowProps {
   speed?: number;
 }
 
-function TickerRow({ images, direction, speed = 35 }: TickerRowProps) {
+function TickerRow({ images, direction, speed = 70 }: TickerRowProps) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    const track = trackRef.current;
+    if (!wrap || !track) return;
+
+    const slow = () => {
+      track.getAnimations().forEach((a) => a.updatePlaybackRate(0.2));
+    };
+    const restore = () => {
+      track.getAnimations().forEach((a) => a.updatePlaybackRate(1));
+    };
+
+    wrap.addEventListener("mouseenter", slow);
+    wrap.addEventListener("mouseleave", restore);
+    return () => {
+      wrap.removeEventListener("mouseenter", slow);
+      wrap.removeEventListener("mouseleave", restore);
+    };
+  }, []);
+
   if (images.length === 0) return null;
-  // Duplicate 4× for seamless loop
   const items = [...images, ...images, ...images, ...images];
 
   return (
-    <div className="ticker-wrap">
+    <div ref={wrapRef} className="ticker-wrap">
       <div
+        ref={trackRef}
         className={`ticker-track ${direction}`}
         style={{ animationDuration: `${speed}s` }}
       >
