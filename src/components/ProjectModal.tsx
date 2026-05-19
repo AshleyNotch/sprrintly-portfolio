@@ -157,25 +157,8 @@ export function ProjectModal({ project, open, onOpenChange }: Props) {
                 <MarkdownText text={p.problem} className="cs-subtitle" />
               </header>
 
-              {/* Hero image */}
-              {/* Hero media — video embed or banner image */}
-              <div className="cs-hero-img">
-                {(() => {
-                  const video = p.videoUrl ? parseVideoUrl(p.videoUrl) : null;
-                  if (video) {
-                    return (
-                      <iframe
-                        src={video.embedUrl}
-                        title={p.title}
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        style={{ width: "100%", height: "100%", border: "none", display: "block" }}
-                      />
-                    );
-                  }
-                  return <img src={p.banner} alt={p.title} />;
-                })()}
-              </div>
+              {/* Hero carousel */}
+              <HeroCarousel project={p} />
 
               {/* Meta strip */}
               <div className="cs-meta-strip">
@@ -214,31 +197,6 @@ export function ProjectModal({ project, open, onOpenChange }: Props) {
                 </div>
               </section>
 
-              {/* Gallery */}
-              {(() => {
-                const imgs = p.images && p.images.length > 0 ? p.images : [p.banner];
-                return (
-                  <section className="cs-section">
-                    <div className="cs-section-grid">
-                      <div className="cs-section-label">Gallery</div>
-                      <div className="cs-gallery">
-                        <div className="cs-gallery-wide">
-                          <img src={imgs[0]} alt={`${p.title} 1`} />
-                        </div>
-                        {imgs.length > 1 && (
-                          <div className="cs-gallery-halves">
-                            {imgs.slice(1).map((src, i) => (
-                              <div key={i} className="cs-gallery-half">
-                                <img src={src} alt={`${p.title} ${i + 2}`} />
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </section>
-                );
-              })()}
 
               {/* Tools */}
               <section className="cs-section">
@@ -288,5 +246,88 @@ export function ProjectModal({ project, open, onOpenChange }: Props) {
         )}
       </aside>
     </>
+  );
+}
+
+/* ---- Hero carousel ---- */
+function HeroCarousel({ project: p }: { project: Project }) {
+  const video = p.videoUrl ? parseVideoUrl(p.videoUrl) : null;
+
+  // Build slides: video first (if any), then banner, then extra images
+  type Slide = { type: "video"; embedUrl: string } | { type: "image"; src: string };
+  const slides: Slide[] = [];
+  if (video) slides.push({ type: "video", embedUrl: video.embedUrl });
+  if (p.banner) slides.push({ type: "image", src: p.banner });
+  if (p.images) p.images.forEach((src) => { if (src) slides.push({ type: "image", src }); });
+
+  const [idx, setIdx] = useState(0);
+  const current = slides[idx] ?? slides[0];
+  const total = slides.length;
+
+  const prev = () => setIdx((i) => (i - 1 + total) % total);
+  const next = () => setIdx((i) => (i + 1) % total);
+
+  // Reset to first slide when project changes
+  useEffect(() => { setIdx(0); }, [p.id]);
+
+  if (!current) return null;
+
+  return (
+    <div className="cs-hero-img" style={{ position: "relative" }}>
+      {/* Current slide */}
+      {current.type === "video" ? (
+        <iframe
+          src={current.embedUrl}
+          title={p.title}
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+        />
+      ) : (
+        <img src={current.src} alt={`${p.title} ${idx + 1}`} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      )}
+
+      {/* Navigation — only show if more than 1 slide */}
+      {total > 1 && (
+        <>
+          {/* Arrows */}
+          <button
+            onClick={prev}
+            aria-label="Previous"
+            style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.9)", border: "none", cursor: "pointer", display: "grid", placeItems: "center", backdropFilter: "blur(4px)", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M10 4L6 8L10 12" stroke="#0a0a0a" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            onClick={next}
+            aria-label="Next"
+            style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.9)", border: "none", cursor: "pointer", display: "grid", placeItems: "center", backdropFilter: "blur(4px)", boxShadow: "0 2px 8px rgba(0,0,0,0.15)" }}
+          >
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+              <path d="M6 4L10 8L6 12" stroke="#0a0a0a" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+
+          {/* Dots */}
+          <div style={{ position: "absolute", bottom: 12, left: 0, right: 0, display: "flex", justifyContent: "center", gap: 6 }}>
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setIdx(i)}
+                aria-label={`Slide ${i + 1}`}
+                style={{ width: i === idx ? 20 : 6, height: 6, borderRadius: 999, background: i === idx ? "#fff" : "rgba(255,255,255,0.5)", border: "none", cursor: "pointer", padding: 0, transition: "all 0.2s" }}
+              />
+            ))}
+          </div>
+
+          {/* Counter */}
+          <div style={{ position: "absolute", top: 12, right: 12, background: "rgba(0,0,0,0.5)", color: "#fff", fontSize: 11, fontWeight: 500, padding: "3px 8px", borderRadius: 999, backdropFilter: "blur(4px)" }}>
+            {idx + 1} / {total}
+          </div>
+        </>
+      )}
+    </div>
   );
 }
