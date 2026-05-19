@@ -57,9 +57,9 @@ export function TickerSection() {
 
   return (
     <section className="py-12 space-y-3 overflow-hidden">
-      <TickerRow images={getRow(0)} direction="to-right" speed={38} />
-      <TickerRow images={getRow(1)} direction="to-left"  speed={32} />
-      <TickerRow images={getRow(2)} direction="to-right" speed={36} />
+      <TickerRow images={getRow(0)} direction="to-right" speed={70} />
+      <TickerRow images={getRow(1)} direction="to-left"  speed={65} />
+      <TickerRow images={getRow(2)} direction="to-right" speed={75} />
     </section>
   );
 }
