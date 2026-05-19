@@ -2,7 +2,7 @@ export type Project = {
   id: string;
   title: string;
   client: string;
-  category: string;
+  categories: string[];
   banner: string;
   livePreview: string;
   problem: string;
@@ -26,7 +26,7 @@ export const projects: Project[] = [
     id: "harmonic",
     title: "Harmonic — Brand Identity",
     client: "Harmonic",
-    category: "Branding",
+    categories: ["Branding"],
     banner:
       "https://framerusercontent.com/images/dyKAmcSn5frmMprV4edgfrdVLA.jpg?width=1600&height=1000",
     livePreview: "https://sprrintly.io/",
@@ -50,7 +50,7 @@ export const projects: Project[] = [
     id: "adup",
     title: "AdUp — Marketing Website",
     client: "AdUp",
-    category: "Web Design",
+    categories: ["Web Design"],
     banner:
       "https://framerusercontent.com/images/Bz1f3EDCqjX6ogtibruM6kHs7Y.jpg?width=1600&height=1000",
     livePreview: "https://sprrintly.io/",
@@ -72,7 +72,7 @@ export const projects: Project[] = [
     id: "tinnitunes",
     title: "Tinnitunes — Product UI",
     client: "Tinnitunes",
-    category: "UI/UX",
+    categories: ["UI/UX"],
     banner:
       "https://framerusercontent.com/images/FlGWMJnifRlqJqPcdGrSDnhQj8.jpg?width=1600&height=1000",
     livePreview: "https://sprrintly.io/",
@@ -94,7 +94,7 @@ export const projects: Project[] = [
     id: "buildform",
     title: "Buildform — Framer Site",
     client: "Buildform",
-    category: "Framer",
+    categories: ["Framer"],
     banner:
       "https://framerusercontent.com/images/6oNDqkXZHWzffUsOz1tVARUjIww.jpg?width=1600&height=1000",
     livePreview: "https://sprrintly.io/",
@@ -116,7 +116,7 @@ export const projects: Project[] = [
     id: "donely",
     title: "Donely AI — App Design",
     client: "Donely AI",
-    category: "UI/UX",
+    categories: ["UI/UX"],
     banner:
       "https://framerusercontent.com/images/QNZreLR0Njc4DHr0nsMRufTBYwc.webp?width=1600&height=1000",
     livePreview: "https://sprrintly.io/",
@@ -138,7 +138,7 @@ export const projects: Project[] = [
     id: "metana",
     title: "Metana — Motion Reel",
     client: "Metana",
-    category: "Motion",
+    categories: ["Motion"],
     banner:
       "https://framerusercontent.com/images/tyQLPNGNTR7gBMBURMt0FNKpAA.png?width=1600&height=1000",
     livePreview: "https://sprrintly.io/",

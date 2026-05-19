@@ -73,7 +73,7 @@ function PortfolioPage() {
     () =>
       filter === "All"
         ? projects
-        : projects.filter((p) => p.category === filter),
+        : projects.filter((p) => p.categories.includes(filter)),
     [filter, projects],
   );
 
@@ -82,11 +82,11 @@ function PortfolioPage() {
     setOpen(true);
   };
 
-  const heroTitle = settings.hero_title ?? "Portfolio.";
-  const heroSubtitle = settings.hero_subtitle ?? "Real design for ANZ startups.";
+  const heroTitle = settings.hero_title ?? "Recent Works";
+  const heroSubtitle = settings.hero_subtitle ?? "";
   const heroBody =
     settings.hero_body ??
-    "A handpicked selection of websites, branding, pitch decks and product UI delivered unlimited and async for early-stage ANZ founders.";
+    "A small selection of recent work including websites, brand systems and product UI shipped for ANZ startups and all across the globe.";
   const footerText = settings.footer_text ?? "Built for ANZ startups.";
 
   return (
@@ -103,7 +103,7 @@ function PortfolioPage() {
           style={{ fontFamily: "var(--font-heading)" }}
         >
           {heroTitle}
-          <span className="text-muted-foreground"> {heroSubtitle}</span>
+          {heroSubtitle && <span className="text-muted-foreground"> {heroSubtitle}</span>}
         </h1>
         <p className="mt-5 max-w-2xl text-lg text-muted-foreground">{heroBody}</p>
       </section>
@@ -117,12 +117,17 @@ function PortfolioPage() {
               <button
                 key={c}
                 onClick={() => setFilter(c)}
-                className={cn(
-                  "rounded-full border px-4 py-2 text-sm font-medium transition",
-                  isActive
-                    ? "bg-foreground text-background border-foreground"
-                    : "bg-card text-foreground border-border hover:border-foreground/30",
-                )}
+                style={{
+                  border: `1.5px solid ${isActive ? "rgba(10,10,10,1)" : "rgba(10,10,10,0.2)"}`,
+                  background: isActive ? "rgba(10,10,10,1)" : "transparent",
+                  color: isActive ? "#fff" : "rgba(10,10,10,0.8)",
+                  borderRadius: 999,
+                  padding: "8px 16px",
+                  fontSize: 14,
+                  fontWeight: 500,
+                  transition: "all 0.15s",
+                  cursor: "pointer",
+                }}
               >
                 {c}
               </button>
@@ -149,7 +154,7 @@ function PortfolioPage() {
                 />
                 <div className="absolute top-4 left-4">
                   <span className="rounded-full bg-background/90 backdrop-blur px-3 py-1 text-xs font-medium text-foreground">
-                    {p.category}
+                    {p.categories[0]}
                   </span>
                 </div>
                 <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition">

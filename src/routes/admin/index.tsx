@@ -120,7 +120,7 @@ function ProjectsTab() {
       id: "",
       title: "",
       client: "",
-      category: "Web Design",
+      categories: [],
       banner: "",
       livePreview: "",
       problem: "",
@@ -202,7 +202,7 @@ function ProjectsTab() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">{p.title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{p.client} · {p.category}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{p.client} · {p.categories.join(", ")}</p>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
@@ -301,16 +301,42 @@ function ProjectDialog({ project, isNew, onSave, onClose }: ProjectDialogProps) 
             <Field label="Client">
               <Input value={p.client} onChange={(v) => set("client", v)} placeholder="Harmonic" />
             </Field>
-            <Field label="Category">
-              <select
-                value={p.category}
-                onChange={(e) => set("category", e.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-              >
-                {CATEGORIES.filter((c) => c !== "All").map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+            <Field label="Categories">
+              <div className="flex flex-wrap gap-2 pt-1">
+                {CATEGORIES.filter((c) => c !== "All").map((c) => {
+                  const selected = p.categories.includes(c);
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() =>
+                        set(
+                          "categories",
+                          selected
+                            ? p.categories.filter((x) => x !== c)
+                            : [...p.categories, c],
+                        )
+                      }
+                      style={{
+                        border: `1.5px solid ${selected ? "rgba(10,10,10,1)" : "rgba(10,10,10,0.18)"}`,
+                        background: selected ? "rgba(10,10,10,1)" : "transparent",
+                        color: selected ? "#fff" : "rgba(10,10,10,0.7)",
+                        borderRadius: 999,
+                        padding: "6px 14px",
+                        fontSize: 13,
+                        fontWeight: 500,
+                        cursor: "pointer",
+                        transition: "all 0.15s",
+                      }}
+                    >
+                      {c}
+                    </button>
+                  );
+                })}
+              </div>
+              {p.categories.length === 0 && (
+                <p className="text-xs text-destructive mt-1">Select at least one category</p>
+              )}
             </Field>
           </Section>
 

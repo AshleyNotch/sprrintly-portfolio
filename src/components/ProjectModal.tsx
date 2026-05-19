@@ -91,7 +91,9 @@ export function ProjectModal({ project, open, onOpenChange }: Props) {
               {/* Hero */}
               <header className="cs-hero">
                 <div className="cs-hero-eyebrow">
-                  <span className="cs-tag">{p.category}</span>
+                  {p.categories.map((c) => (
+                    <span key={c} className="cs-tag">{c}</span>
+                  ))}
                   <span className="cs-dot" />
                   <span>{p.client}</span>
                 </div>
@@ -112,7 +114,7 @@ export function ProjectModal({ project, open, onOpenChange }: Props) {
                 </div>
                 <div>
                   <div className="cs-meta-label">Category</div>
-                  <div className="cs-meta-value">{p.category}</div>
+                  <div className="cs-meta-value">{p.categories.join(", ")}</div>
                 </div>
                 <div>
                   <div className="cs-meta-label">Tools</div>
