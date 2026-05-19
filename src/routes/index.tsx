@@ -1,176 +1,212 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { projects, CATEGORIES, type Category, type Project } from "@/data/projects";
-import { Mock } from "@/components/Mocks";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowUpRight } from "lucide-react";
+import { projects as fallbackProjects, CATEGORIES, type Project } from "@/data/projects";
 import { ProjectModal } from "@/components/ProjectModal";
+import { supabase, dbToProject, fetchSettings } from "@/lib/supabase";
+import type { DbProject, SiteSettings } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   component: PortfolioPage,
 });
 
-function Nav() {
-  return (
-    <nav className="nav">
-      <div className="shell nav-inner">
-        <a href="https://sprrintly.io/" className="brand">
-          <span className="brand-dot" aria-hidden="true" />
-          <span>Sprrintly</span>
-        </a>
-        <div className="nav-links">
-          <a href="https://sprrintly.io/" className="active">Work</a>
-          <a href="https://sprrintly.io/#services">Services</a>
-          <a href="https://sprrintly.io/#pricing">Pricing</a>
-          <a href="https://cal.com/sprrintly-ash/30min" className="nav-cta">Book a call</a>
-        </div>
-      </div>
-    </nav>
-  );
-}
-
-function PageHeader() {
-  return (
-    <header className="page-head">
-      <div className="shell">
-        <div className="eyebrow">Open for ANZ Startups</div>
-        <h1 className="page-title">
-          Selected <em>work</em> from the studio.
-        </h1>
-        <p className="page-sub">
-          A small set of recent projects — brand systems, product surfaces,
-          marketing sites and the occasional pitch deck. Click any project
-          to read the case study, or jump to the live build.
-        </p>
-      </div>
-    </header>
-  );
-}
-
-function Filters({
-  active,
-  setActive,
-  counts,
-}: {
-  active: Category;
-  setActive: (c: Category) => void;
-  counts: Record<string, number>;
-}) {
-  return (
-    <div className="shell">
-      <div className="filters-row">
-        {CATEGORIES.map((c) => (
-          <button
-            key={c}
-            className={"chip" + (c === active ? " active" : "")}
-            onClick={() => setActive(c)}
-          >
-            {c}
-            <span className="chip-count">{counts[c]}</span>
-          </button>
-        ))}
-        <div className="filters-spacer" />
-        <div className="results-count">
-          Showing {counts[active]} {counts[active] === 1 ? "project" : "projects"}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProjectCard({ project, onOpen }: { project: Project; onOpen: (p: Project) => void }) {
-  return (
-    <article className="card" onClick={() => onOpen(project)}>
-      <div className="card-media">
-        <div className="card-media-inner">
-          <Mock
-            type={project.mockType}
-            color={project.color}
-            accent={project.accent}
-            title={project.title}
-          />
-        </div>
-        <div className="card-overlay-top">
-          <span className="card-tag">{project.category}</span>
-          <span className="card-year">{project.year}</span>
-        </div>
-        <div className="card-overlay">
-          <h3 className="card-title">{project.title}</h3>
-          <div className="card-client">{project.client}</div>
-        </div>
-        <div className="card-arrow" aria-hidden="true">
-          <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-            <path d="M5 11L11 5M11 5H6M11 5V10" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className="page-footer">
-      <div className="shell">
-        <div>© {new Date().getFullYear()} Sprrintly. Unlimited designs for ANZ startups.</div>
-        <div style={{ display: "flex", gap: 24 }}>
-          <a href="https://sprrintly.io/terms">Terms</a>
-          <a href="https://sprrintly.io/privacy-policy">Privacy</a>
-          <a href="mailto:ashley@sprrintly.io">ashley@sprrintly.io</a>
-        </div>
-      </div>
-    </footer>
-  );
+function injectFont(family: string) {
+  const id = `gfont-${family.replace(/\s+/g, "-").toLowerCase()}`;
+  if (document.getElementById(id)) return;
+  const link = document.createElement("link");
+  link.id = id;
+  link.rel = "stylesheet";
+  link.href = `https://fonts.googleapis.com/css2?family=${family.replace(/\s+/g, "+")}:wght@400;500;600;700&display=swap`;
+  document.head.appendChild(link);
 }
 
 function PortfolioPage() {
-  const [activeFilter, setActiveFilter] = useState<Category>("All");
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<(typeof CATEGORIES)[number]>("All");
+  const [active, setActive] = useState<Project | null>(null);
+  const [open, setOpen] = useState(false);
+  const [projects, setProjects] = useState<Project[]>(fallbackProjects);
+  const [settings, setSettings] = useState<Partial<SiteSettings>>({});
 
-  const counts = useMemo(() => {
-    const c: Record<string, number> = { All: projects.length };
-    for (const cat of CATEGORIES) {
-      if (cat === "All") continue;
-      c[cat] = projects.filter((p) => p.category === cat).length;
-    }
-    return c;
+  /* Load projects + settings from Supabase, fall back to hardcoded if empty */
+  useEffect(() => {
+    supabase
+      .from("projects")
+      .select("*")
+      .order("sort_order")
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setProjects((data as DbProject[]).map(dbToProject));
+        }
+      });
+
+    fetchSettings().then((s) => {
+      if (Object.keys(s).length > 0) setSettings(s);
+    });
   }, []);
 
-  const filtered =
-    activeFilter === "All"
-      ? projects
-      : projects.filter((p) => p.category === activeFilter);
+  /* Apply fonts from settings */
+  useEffect(() => {
+    if (settings.font_body) {
+      injectFont(settings.font_body);
+      document.documentElement.style.setProperty("--font-body", `'${settings.font_body}', sans-serif`);
+    }
+    if (settings.font_heading) {
+      injectFont(settings.font_heading);
+      document.documentElement.style.setProperty("--font-heading", `'${settings.font_heading}', sans-serif`);
+    }
+    if (settings.brand_accent) {
+      document.documentElement.style.setProperty("--site-accent", settings.brand_accent);
+    }
+  }, [settings]);
 
-  const openProject = openId ? projects.find((p) => p.id === openId) ?? null : null;
+  const filtered = useMemo(
+    () =>
+      filter === "All"
+        ? projects
+        : projects.filter((p) => p.category === filter),
+    [filter, projects],
+  );
 
-  const onNext = useMemo(() => {
-    if (!openProject) return { nextTitle: "", go: () => {} };
-    const idx = projects.findIndex((p) => p.id === openProject.id);
-    const next = projects[(idx + 1) % projects.length];
-    return { nextTitle: next.title, go: () => setOpenId(next.id) };
-  }, [openProject?.id]);
+  const openProject = (p: Project) => {
+    setActive(p);
+    setOpen(true);
+  };
+
+  const heroTitle = settings.hero_title ?? "Portfolio.";
+  const heroSubtitle = settings.hero_subtitle ?? "Real projects, real outcomes.";
+  const heroBody =
+    settings.hero_body ??
+    "A small selection of recent work — websites, brand systems and product UI shipped for ANZ startups.";
+  const footerText = settings.footer_text ?? "Built for ANZ startups.";
 
   return (
-    <>
-      <Nav />
-      <PageHeader />
-      <Filters active={activeFilter} setActive={setActiveFilter} counts={counts} />
-      <div className="shell">
-        <div className="grid">
+    <main className="min-h-screen bg-background" style={{ fontFamily: "var(--font-body)" }}>
+      {/* Header */}
+      <header className="mx-auto max-w-6xl px-6 pt-10 pb-6 flex items-center justify-between">
+        <a href="/" className="flex items-center gap-2">
+          <span
+            className="inline-flex h-7 w-7 items-center justify-center rounded-full"
+            style={{ backgroundColor: settings.brand_accent ?? undefined, background: settings.brand_accent ? undefined : "oklch(0.89 0.18 142)" }}
+          >
+            <span className="block h-2 w-3 rounded-sm bg-foreground" />
+          </span>
+          <span className="font-semibold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>Sprrintly</span>
+        </a>
+        <a
+          href="https://cal.com/sprrintly-ash/30min"
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 rounded-full bg-foreground text-background px-4 py-2 text-sm font-medium hover:opacity-90 transition"
+        >
+          Book a call <ArrowUpRight className="h-4 w-4" />
+        </a>
+      </header>
+
+      {/* Hero */}
+      <section className="mx-auto max-w-6xl px-6 pt-10 pb-12">
+        <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
+          <span className="h-2 w-2 rounded-full bg-accent" /> Selected work
+          2023 — 2026
+        </div>
+        <h1
+          className="mt-5 text-5xl md:text-7xl font-semibold tracking-tight leading-[1.02]"
+          style={{ fontFamily: "var(--font-heading)" }}
+        >
+          {heroTitle}
+          <span className="text-muted-foreground"> {heroSubtitle}</span>
+        </h1>
+        <p className="mt-5 max-w-2xl text-lg text-muted-foreground">{heroBody}</p>
+      </section>
+
+      {/* Filter pills */}
+      <section className="mx-auto max-w-6xl px-6">
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.map((c) => {
+            const isActive = filter === c;
+            return (
+              <button
+                key={c}
+                onClick={() => setFilter(c)}
+                className={cn(
+                  "rounded-full border px-4 py-2 text-sm font-medium transition",
+                  isActive
+                    ? "bg-foreground text-background border-foreground"
+                    : "bg-card text-foreground border-border hover:border-foreground/30",
+                )}
+              >
+                {c}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Grid */}
+      <section className="mx-auto max-w-6xl px-6 py-10 pb-24">
+        <div className="grid gap-6 md:gap-8 grid-cols-1 md:grid-cols-2">
           {filtered.map((p) => (
-            <ProjectCard key={p.id} project={p} onOpen={(pr) => setOpenId(pr.id)} />
+            <button
+              key={p.id}
+              onClick={() => openProject(p)}
+              className="group text-left"
+            >
+              <div className="relative overflow-hidden rounded-2xl bg-muted aspect-[16/11]">
+                <img
+                  src={p.banner}
+                  alt={p.title}
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                  loading="lazy"
+                />
+                <div className="absolute top-4 left-4">
+                  <span className="rounded-full bg-background/90 backdrop-blur px-3 py-1 text-xs font-medium text-foreground">
+                    {p.category}
+                  </span>
+                </div>
+                <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-foreground text-background px-3 py-1.5 text-xs font-medium">
+                    View case <ArrowUpRight className="h-3.5 w-3.5" />
+                  </span>
+                </div>
+              </div>
+              <div className="mt-4 flex items-start justify-between gap-4">
+                <div>
+                  <h3
+                    className="text-lg font-semibold text-foreground"
+                    style={{ fontFamily: "var(--font-heading)" }}
+                  >
+                    {p.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">{p.client}</p>
+                </div>
+                <ArrowUpRight className="h-5 w-5 text-muted-foreground transition group-hover:text-foreground group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+              </div>
+            </button>
           ))}
         </div>
+
         {filtered.length === 0 && (
-          <div style={{ padding: "64px 0", textAlign: "center", color: "#9a9a9a" }}>
+          <p className="text-center text-muted-foreground py-20">
             No projects in this category yet.
-          </div>
+          </p>
         )}
-      </div>
-      <Footer />
-      <ProjectModal
-        project={openProject}
-        onClose={() => setOpenId(null)}
-        onNext={onNext}
-      />
-    </>
+      </section>
+
+      <footer className="border-t border-border">
+        <div className="mx-auto max-w-6xl px-6 py-8 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
+          <p>© {new Date().getFullYear()} Sprrintly. {footerText}</p>
+          <a
+            href="https://sprrintly.io/"
+            target="_blank"
+            rel="noreferrer"
+            className="hover:text-foreground transition"
+          >
+            sprrintly.io ↗
+          </a>
+        </div>
+      </footer>
+
+      <ProjectModal project={active} open={open} onOpenChange={setOpen} />
+    </main>
   );
 }

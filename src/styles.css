@@ -144,6 +144,185 @@
 }
 
 /* ============================================================
+   Case study slide-in modal
+   ============================================================ */
+
+.cs-backdrop {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(10, 10, 10, 0.4);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+.cs-backdrop.open { opacity: 1; pointer-events: auto; }
+
+.cs-panel {
+  position: fixed; top: 0; right: 0; bottom: 0;
+  width: min(1080px, 94vw);
+  z-index: 101;
+  background: #fff;
+  transform: translateX(102%);
+  transition: transform 0.45s cubic-bezier(0.32, 0.72, 0, 1);
+  display: flex; flex-direction: column;
+  box-shadow: -20px 0 60px rgba(0, 0, 0, 0.15);
+  font-family: 'Onest', 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+.cs-panel.open { transform: translateX(0); }
+
+/* Scrollbar hidden */
+.cs-body::-webkit-scrollbar { width: 0; }
+.cs-body { scrollbar-width: none; flex: 1; overflow-y: auto; overflow-x: hidden; }
+
+/* Top bar */
+.cs-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 32px;
+  border-bottom: 1px solid #ececec;
+  flex-shrink: 0;
+  font-size: 14px; color: #6b6b6b;
+}
+.cs-topbar-left { display: flex; align-items: center; gap: 14px; }
+.cs-topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+.cs-icon-btn {
+  width: 38px; height: 38px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: #f4f4f4; border: none; cursor: pointer;
+  color: #0a0a0a; transition: background 0.15s;
+}
+.cs-icon-btn:hover { background: #ececec; }
+
+.cs-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 10px 18px; border-radius: 999px;
+  font-size: 14px; font-weight: 500;
+  font-family: inherit;
+  text-decoration: none;
+  transition: transform 0.15s, background 0.15s;
+  border: none; cursor: pointer;
+}
+.cs-btn:hover { transform: translateY(-1px); }
+.cs-btn-primary { background: #0a0a0a; color: #fff; }
+.cs-btn-ghost { background: #f4f4f4; color: #0a0a0a; }
+
+/* Hero section */
+.cs-hero { padding: 56px 56px 40px; border-bottom: 1px solid #ececec; }
+.cs-hero-eyebrow {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 20px; font-size: 13px; color: #6b6b6b;
+}
+.cs-dot { width: 3px; height: 3px; border-radius: 50%; background: #9a9a9a; }
+.cs-tag {
+  padding: 5px 11px; border-radius: 999px;
+  background: #f4f4f4; color: #1a1a1a;
+  font-size: 13px;
+}
+.cs-title {
+  font-size: clamp(36px, 5vw, 60px);
+  font-weight: 600; letter-spacing: -0.03em;
+  line-height: 1.05; margin-bottom: 18px;
+  color: #0a0a0a;
+  text-wrap: balance;
+}
+.cs-subtitle {
+  font-size: 18px; color: #6b6b6b; line-height: 1.55; max-width: 58ch;
+}
+
+/* Hero image */
+.cs-hero-img {
+  margin: 0 56px 0;
+  aspect-ratio: 16/10;
+  overflow: hidden;
+}
+.cs-hero-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Meta strip */
+.cs-meta-strip {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid #ececec;
+  border-bottom: 1px solid #ececec;
+}
+.cs-meta-strip > div { padding: 22px 28px; border-right: 1px solid #ececec; }
+.cs-meta-strip > div:last-child { border-right: none; }
+.cs-meta-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.09em;
+  color: #9a9a9a; margin-bottom: 7px;
+}
+.cs-meta-value { font-size: 15px; color: #0a0a0a; font-weight: 500; }
+
+/* Content sections */
+.cs-section { padding: 56px 56px; border-bottom: 1px solid #ececec; }
+.cs-section-tinted { background: #FAFAF6; }
+.cs-section-grid { display: grid; grid-template-columns: 180px 1fr; gap: 48px; }
+.cs-section-label {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+  color: #9a9a9a; font-weight: 500; padding-top: 4px;
+}
+.cs-section-h3 {
+  font-size: 28px; font-weight: 600; letter-spacing: -0.025em;
+  line-height: 1.2; margin-bottom: 16px; color: #0a0a0a;
+}
+.cs-lede {
+  font-size: 20px; line-height: 1.55; color: #0a0a0a; letter-spacing: -0.01em;
+}
+.cs-body-text { font-size: 16px; line-height: 1.65; color: #1a1a1a; }
+
+/* Process gallery */
+.cs-gallery { display: flex; flex-direction: column; gap: 14px; }
+.cs-gallery-wide { border-radius: 12px; overflow: hidden; aspect-ratio: 16/9; }
+.cs-gallery-wide img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cs-gallery-halves { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.cs-gallery-half { border-radius: 12px; overflow: hidden; aspect-ratio: 4/3; }
+.cs-gallery-half img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Tools */
+.cs-tools { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.cs-tool-chip {
+  display: inline-flex; align-items: center;
+  padding: 9px 16px; border-radius: 999px;
+  background: #f4f4f4; font-size: 14px; color: #1a1a1a;
+}
+
+/* Testimonial */
+.cs-quote {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-size: clamp(24px, 3vw, 36px);
+  line-height: 1.25; letter-spacing: -0.01em;
+  color: #0a0a0a; margin-bottom: 28px;
+  font-style: normal;
+  text-wrap: pretty;
+}
+.cs-quote::before { content: "\201C"; margin-right: 2px; }
+.cs-quote::after { content: "\201D"; }
+.cs-author-row { display: flex; align-items: center; gap: 14px; }
+.cs-avatar-img { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+.cs-avatar-fallback {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: #f4f4f4; display: grid; place-items: center;
+  font-weight: 600; color: #0a0a0a; font-size: 18px;
+  flex-shrink: 0;
+}
+.cs-author-name { font-weight: 600; font-size: 15px; color: #0a0a0a; }
+.cs-author-role { font-size: 13px; color: #6b6b6b; }
+
+/* Responsive */
+@media (max-width: 720px) {
+  .cs-hero { padding: 28px 20px 24px; }
+  .cs-hero-img { margin: 0 20px; }
+  .cs-section { padding: 36px 20px; }
+  .cs-section-grid { grid-template-columns: 1fr; gap: 12px; }
+  .cs-meta-strip { grid-template-columns: 1fr 1fr; }
+  .cs-meta-strip > div:nth-child(2) { border-right: none; }
+  .cs-meta-strip > div:nth-child(3) { grid-column: 1 / -1; border-top: 1px solid #ececec; border-right: none; }
+  .cs-gallery-halves { grid-template-columns: 1fr; }
+  .cs-topbar { padding: 14px 16px; }
+  .cs-btn span { display: none; }
+}
+
+/* ============================================================
    Portfolio design system — from Work.html
    ============================================================ */
 

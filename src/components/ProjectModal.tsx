@@ -1,20 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import type { Project } from "@/data/projects";
-import { Mock } from "@/components/Mocks";
-
-interface OnNext {
-  nextTitle: string;
-  go: () => void;
-}
 
 interface Props {
   project: Project | null;
-  onClose: () => void;
-  onNext: OnNext;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function ProjectModal({ project, onClose, onNext }: Props) {
-  const open = !!project;
+export function ProjectModal({ project, open, onOpenChange }: Props) {
   const [lastProject, setLastProject] = useState<Project | null>(project);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -25,7 +18,7 @@ export function ProjectModal({ project, onClose, onNext }: Props) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onOpenChange(false);
     };
     window.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -33,7 +26,7 @@ export function ProjectModal({ project, onClose, onNext }: Props) {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open, onClose]);
+  }, [open, onOpenChange]);
 
   useEffect(() => {
     if (open && scrollRef.current) scrollRef.current.scrollTop = 0;
@@ -44,33 +37,48 @@ export function ProjectModal({ project, onClose, onNext }: Props) {
   return (
     <>
       <div
-        className={"modal-backdrop" + (open ? " open" : "")}
-        onClick={onClose}
+        className={"cs-backdrop" + (open ? " open" : "")}
+        onClick={() => onOpenChange(false)}
       />
       <aside
-        className={"modal" + (open ? " open" : "")}
+        className={"cs-panel" + (open ? " open" : "")}
         role="dialog"
         aria-modal="true"
         aria-label={p ? `${p.title} case study` : "Case study"}
       >
         {p && (
           <>
-            <div className="modal-top">
-              <div className="modal-top-left">
-                <button className="btn-icon" onClick={onClose} aria-label="Close case study">
+            {/* Top bar */}
+            <div className="cs-topbar">
+              <div className="cs-topbar-left">
+                <button
+                  className="cs-icon-btn"
+                  onClick={() => onOpenChange(false)}
+                  aria-label="Close"
+                >
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <path d="M9 4L5 8L9 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>
                 <span>Case study</span>
                 <span style={{ color: "#d0d0d0" }}>/</span>
-                <span style={{ color: "#0a0a0a", fontWeight: 500 }}>{p.title}</span>
+                <span style={{ color: "#0a0a0a", fontWeight: 500 }}>{p.client}</span>
               </div>
-              <div className="modal-actions">
-                <a className="btn btn-ghost" href={p.liveUrl} target="_blank" rel="noopener noreferrer">
+              <div className="cs-topbar-actions">
+                <a
+                  className="cs-btn cs-btn-ghost"
+                  href={p.livePreview}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Share
                 </a>
-                <a className="btn btn-primary" href={p.liveUrl} target="_blank" rel="noopener noreferrer">
+                <a
+                  className="cs-btn cs-btn-primary"
+                  href={p.livePreview}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
                   Live Preview
                   <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                     <path d="M5 11L11 5M11 5H6M11 5V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -79,207 +87,133 @@ export function ProjectModal({ project, onClose, onNext }: Props) {
               </div>
             </div>
 
-            <div className="modal-scroll" ref={scrollRef}>
-              {/* HERO */}
+            <div className="cs-body" ref={scrollRef}>
+              {/* Hero */}
               <header className="cs-hero">
-                <div className="cs-hero-meta">
+                <div className="cs-hero-eyebrow">
                   <span className="cs-tag">{p.category}</span>
-                  <span className="dot" />
+                  <span className="cs-dot" />
                   <span>{p.client}</span>
-                  <span className="dot" />
-                  <span>{p.year}</span>
                 </div>
-                <h1 className="cs-title">
-                  {p.title} — <em>{p.summary}</em>
-                </h1>
+                <h1 className="cs-title">{p.title}</h1>
+                <p className="cs-subtitle">{p.problem}</p>
               </header>
 
-              {/* HERO MEDIA */}
-              <div className="cs-hero-media">
-                <Mock type={p.mockType} color={p.color} accent={p.accent} title={p.title} />
+              {/* Hero image */}
+              <div className="cs-hero-img">
+                <img src={p.banner} alt={p.title} />
               </div>
 
-              {/* META STRIP */}
+              {/* Meta strip */}
               <div className="cs-meta-strip">
                 <div>
                   <div className="cs-meta-label">Client</div>
                   <div className="cs-meta-value">{p.client}</div>
                 </div>
                 <div>
-                  <div className="cs-meta-label">Role</div>
-                  <div className="cs-meta-value">{p.role}</div>
+                  <div className="cs-meta-label">Category</div>
+                  <div className="cs-meta-value">{p.category}</div>
                 </div>
                 <div>
-                  <div className="cs-meta-label">Duration</div>
-                  <div className="cs-meta-value">{p.duration}</div>
-                </div>
-                <div>
-                  <div className="cs-meta-label">Deliverables</div>
-                  <div className="cs-meta-value">{p.deliverables}</div>
+                  <div className="cs-meta-label">Tools</div>
+                  <div className="cs-meta-value">{p.tools.slice(0, 2).join(", ")}</div>
                 </div>
               </div>
 
-              {/* OVERVIEW */}
+              {/* Overview */}
               <section className="cs-section">
                 <div className="cs-section-grid">
                   <div className="cs-section-label">Overview</div>
                   <div>
-                    <p className="lede">{p.overview}</p>
+                    <p className="cs-lede">{p.solution}</p>
                   </div>
                 </div>
               </section>
 
-              {/* CHALLENGE */}
+              {/* Challenge */}
               <section className="cs-section">
                 <div className="cs-section-grid">
                   <div className="cs-section-label">The challenge</div>
                   <div>
-                    <h3>What the project had to solve.</h3>
-                    <p>{p.challenge}</p>
+                    <h3 className="cs-section-h3">What the project had to solve.</h3>
+                    <p className="cs-body-text">{p.challenge}</p>
                   </div>
                 </div>
               </section>
 
-              {/* PROCESS GALLERY */}
+              {/* Process gallery */}
               <section className="cs-section">
                 <div className="cs-section-grid">
                   <div className="cs-section-label">Process</div>
                   <div>
-                    <h3>From sketch to ship.</h3>
-                    <p style={{ marginBottom: 32 }}>
-                      A small selection of work-in-progress frames, system explorations, and the surfaces that made it into the final build.
+                    <h3 className="cs-section-h3">From brief to build.</h3>
+                    <p className="cs-body-text" style={{ marginBottom: 24 }}>
+                      A selection of frames, explorations, and the surfaces that made it into the final build.
                     </p>
                     <div className="cs-gallery">
-                      <div className="cs-gallery-full">
-                        <Mock type={p.mockType} color={p.color} accent={p.accent} title={p.title} />
+                      <div className="cs-gallery-wide">
+                        <img src={p.banner} alt={`${p.title} process`} />
                       </div>
-                      <div className="cs-gallery-item">
-                        <ProcessThumb tone="light" color={p.color} accent={p.accent} title={p.title} />
-                      </div>
-                      <div className="cs-gallery-item">
-                        <ProcessThumb tone="dark" color={p.color} accent={p.accent} title={p.title} />
-                      </div>
-                      <div className="cs-gallery-item" style={{ gridColumn: "1 / -1", aspectRatio: "21/9" }}>
-                        <ProcessThumb tone="wide" color={p.color} accent={p.accent} title={p.title} />
+                      <div className="cs-gallery-halves">
+                        <div className="cs-gallery-half">
+                          <img src={p.banner} alt={`${p.title} detail A`} style={{ objectPosition: "top" }} />
+                        </div>
+                        <div className="cs-gallery-half">
+                          <img src={p.banner} alt={`${p.title} detail B`} style={{ objectPosition: "bottom" }} />
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </section>
 
-              {/* TOOLS */}
+              {/* Tools */}
               <section className="cs-section">
                 <div className="cs-section-grid">
                   <div className="cs-section-label">Tools</div>
                   <div>
-                    <h3>What we used.</h3>
-                    <p style={{ marginBottom: 8 }}>The tools that supported the work, end to end.</p>
-                    <div className="cs-stack">
-                      {p.stack.map((s) => (
-                        <div className="cs-stack-item" key={s.name}>
-                          <span className="swatch" style={{ background: s.color }} />
-                          {s.name}
-                        </div>
+                    <h3 className="cs-section-h3">What we used.</h3>
+                    <div className="cs-tools">
+                      {p.tools.map((t) => (
+                        <span className="cs-tool-chip" key={t}>{t}</span>
                       ))}
                     </div>
                   </div>
                 </div>
               </section>
 
-              {/* TESTIMONIAL */}
-              <section className="cs-section" style={{ background: "#FAFAF6" }}>
+              {/* Testimonial */}
+              <section className="cs-section cs-section-tinted">
                 <div className="cs-section-grid">
                   <div className="cs-section-label">Words</div>
                   <div>
-                    <div className="cs-quote">{p.quote}</div>
-                    <div className="cs-quote-by">
-                      <div className="cs-avatar">{p.author.charAt(0)}</div>
+                    <blockquote className="cs-quote">
+                      {p.testimonial.quote}
+                    </blockquote>
+                    <div className="cs-author-row">
+                      {p.testimonial.avatar ? (
+                        <img
+                          src={p.testimonial.avatar}
+                          alt={p.testimonial.author}
+                          className="cs-avatar-img"
+                        />
+                      ) : (
+                        <div className="cs-avatar-fallback">
+                          {p.testimonial.author.charAt(0)}
+                        </div>
+                      )}
                       <div>
-                        <div className="cs-author">{p.author}</div>
-                        <div className="cs-author-role">{p.role_author}</div>
+                        <div className="cs-author-name">{p.testimonial.author}</div>
+                        <div className="cs-author-role">{p.testimonial.role}</div>
                       </div>
                     </div>
                   </div>
                 </div>
               </section>
-
-              {/* FOOTER / NEXT */}
-              <div className="cs-footer">
-                <div>
-                  <div className="label">Up next</div>
-                  <h4>{onNext.nextTitle}</h4>
-                </div>
-                <button className="btn btn-primary" onClick={onNext.go}>
-                  View next project
-                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="M3 8H13M13 8L8 3M13 8L8 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-              </div>
             </div>
           </>
         )}
       </aside>
     </>
-  );
-}
-
-interface ProcessThumbProps {
-  tone: "light" | "dark" | "wide";
-  color: string;
-  accent: string;
-  title: string;
-}
-
-function ProcessThumb({ tone, color, accent, title }: ProcessThumbProps) {
-  if (tone === "wide") {
-    return (
-      <div style={{ position: "absolute", inset: 0, background: "#FAFAF6", padding: 28, display: "flex", alignItems: "center", gap: 24 }}>
-        <div style={{ width: 80, height: 80, borderRadius: 16, background: color, display: "grid", placeItems: "center", flexShrink: 0 }}>
-          <div style={{ width: 32, height: 32, borderRadius: 8, background: accent }} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, color: "#888", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>
-            Color system / {title}
-          </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <div style={{ flex: 1, height: 48, borderRadius: 8, background: color }} />
-            <div style={{ flex: 1, height: 48, borderRadius: 8, background: accent }} />
-            <div style={{ flex: 1, height: 48, borderRadius: 8, background: "#0a0a0a" }} />
-            <div style={{ flex: 1, height: 48, borderRadius: 8, background: "#FAFAF6", border: "1px solid #ececec" }} />
-            <div style={{ flex: 1, height: 48, borderRadius: 8, background: "#fff", border: "1px solid #ececec" }} />
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  const bg = tone === "dark" ? "#0F0F11" : "#FAFAF6";
-  const ink = tone === "dark" ? "#fff" : "#0a0a0a";
-  const muted = tone === "dark" ? "#26262a" : "#ececec";
-
-  return (
-    <div style={{ position: "absolute", inset: 0, background: bg, padding: 24, display: "flex", flexDirection: "column", gap: 10 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ fontSize: 10, color: tone === "dark" ? "#888" : "#999", textTransform: "uppercase", letterSpacing: "0.1em" }}>
-          {tone === "dark" ? "Component / Card" : "Component / Hero"}
-        </div>
-        <div style={{ width: 20, height: 20, borderRadius: 5, background: accent }} />
-      </div>
-      <div style={{ flex: 1, marginTop: 6, display: "flex", flexDirection: "column", gap: 8, justifyContent: "center" }}>
-        <div style={{ height: 18, borderRadius: 3, background: ink, width: "60%" }} />
-        <div style={{ height: 18, borderRadius: 3, background: ink, width: "80%" }} />
-        <div style={{ height: 6, borderRadius: 2, background: muted, width: "70%", marginTop: 6 }} />
-        <div style={{ height: 6, borderRadius: 2, background: muted, width: "60%" }} />
-      </div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <div style={{ padding: "6px 12px", borderRadius: 999, background: accent, color: tone === "dark" ? "#0a0a0a" : "#fff", fontSize: 10, fontWeight: 600 }}>
-          Primary
-        </div>
-        <div style={{ padding: "6px 12px", borderRadius: 999, background: "transparent", color: ink, fontSize: 10, fontWeight: 600, border: `1px solid ${muted}` }}>
-          Secondary
-        </div>
-      </div>
-    </div>
   );
 }
