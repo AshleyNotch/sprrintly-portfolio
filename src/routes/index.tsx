@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { projects as fallbackProjects, CATEGORIES, type Project } from "@/data/projects";
 import { ProjectModal } from "@/components/ProjectModal";
+import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { supabase, dbToProject, fetchSettings } from "@/lib/supabase";
 import type { DbProject, SiteSettings } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -89,26 +91,7 @@ function PortfolioPage() {
 
   return (
     <main className="min-h-screen bg-background" style={{ fontFamily: "var(--font-body)" }}>
-      {/* Header */}
-      <header className="mx-auto max-w-6xl px-6 pt-10 pb-6 flex items-center justify-between">
-        <a href="/" className="flex items-center gap-2">
-          <span
-            className="inline-flex h-7 w-7 items-center justify-center rounded-full"
-            style={{ backgroundColor: settings.brand_accent ?? undefined, background: settings.brand_accent ? undefined : "oklch(0.89 0.18 142)" }}
-          >
-            <span className="block h-2 w-3 rounded-sm bg-foreground" />
-          </span>
-          <span className="font-semibold tracking-tight" style={{ fontFamily: "var(--font-heading)" }}>Sprrintly</span>
-        </a>
-        <a
-          href="https://cal.com/sprrintly-ash/30min"
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1 rounded-full bg-foreground text-background px-4 py-2 text-sm font-medium hover:opacity-90 transition"
-        >
-          Book a call <ArrowUpRight className="h-4 w-4" />
-        </a>
-      </header>
+      <SiteHeader />
 
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 pt-10 pb-12">
@@ -198,19 +181,7 @@ function PortfolioPage() {
         )}
       </section>
 
-      <footer className="border-t border-border">
-        <div className="mx-auto max-w-6xl px-6 py-8 flex flex-wrap items-center justify-between gap-3 text-sm text-muted-foreground">
-          <p>© {new Date().getFullYear()} Sprrintly. {footerText}</p>
-          <a
-            href="https://sprrintly.io/"
-            target="_blank"
-            rel="noreferrer"
-            className="hover:text-foreground transition"
-          >
-            sprrintly.io ↗
-          </a>
-        </div>
-      </footer>
+      <SiteFooter />
 
       <ProjectModal project={active} open={open} onOpenChange={setOpen} />
     </main>
