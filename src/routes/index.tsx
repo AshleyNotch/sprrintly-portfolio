@@ -6,21 +6,6 @@ import { ProjectModal } from "@/components/ProjectModal";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
-    meta: [
-      { title: "Portfolio — Sprrintly" },
-      {
-        name: "description",
-        content:
-          "Selected work by Sprrintly — unlimited design for ANZ startups. Branding, web design, UI/UX, Framer and motion projects.",
-      },
-      { property: "og:title", content: "Portfolio — Sprrintly" },
-      {
-        property: "og:description",
-        content: "Selected work by Sprrintly — design for ANZ startups.",
-      },
-    ],
-  }),
   component: PortfolioPage,
 });
 
