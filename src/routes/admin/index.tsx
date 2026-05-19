@@ -95,15 +95,21 @@ function ProjectsTab() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("projects")
-      .select("*")
-      .order("sort_order");
-    if (data && data.length > 0) {
-      setProjects((data as DbProject[]).map(dbToProject));
-    } else {
-      setProjects(fallbackProjects);
+
+    // Find which fallback projects are missing from Supabase and seed them
+    const { data: existing } = await supabase.from("projects").select("id");
+    const dbIds = new Set((existing ?? []).map((r: { id: string }) => r.id));
+    const missing = fallbackProjects.filter((p) => !dbIds.has(p.id));
+    if (missing.length > 0) {
+      const rows = missing.map((p, i) =>
+        ({ ...projectToDb(p, (existing?.length ?? 0) + i), updated_at: new Date().toISOString() })
+      );
+      await supabase.from("projects").upsert(rows);
     }
+
+    // Fetch everything
+    const { data } = await supabase.from("projects").select("*").order("sort_order");
+    setProjects(data && data.length > 0 ? (data as DbProject[]).map(dbToProject) : fallbackProjects);
     setLoading(false);
   };
 

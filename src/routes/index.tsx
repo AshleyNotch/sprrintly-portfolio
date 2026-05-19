@@ -36,7 +36,14 @@ function PortfolioPage() {
       .order("sort_order")
       .then(({ data }) => {
         if (data && data.length > 0) {
-          setProjects((data as DbProject[]).map(dbToProject));
+          const dbProjects = (data as DbProject[]).map(dbToProject);
+          const dbIds = new Set(dbProjects.map((p) => p.id));
+          // Show Supabase version for saved projects, fallback for the rest
+          const merged = [
+            ...dbProjects,
+            ...fallbackProjects.filter((p) => !dbIds.has(p.id)),
+          ];
+          setProjects(merged);
         }
       });
 
