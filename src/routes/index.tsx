@@ -5,6 +5,7 @@ import { projects as fallbackProjects, CATEGORIES, type Project } from "@/data/p
 import { ProjectModal } from "@/components/ProjectModal";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { TickerSection } from "@/components/Ticker";
 import { supabase, dbToProject, fetchSettings } from "@/lib/supabase";
 import type { DbProject, SiteSettings } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
@@ -193,6 +194,7 @@ function PortfolioPage() {
         )}
       </section>
 
+      <TickerSection />
       <SiteFooter />
 
       <ProjectModal project={active} open={open} onOpenChange={setOpen} />

@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useRef, useCallback } from "react";
+import logoUrl from "@/assets/logo.avif";
 import { supabase, dbToProject, projectToDb, fetchSettings, saveSettings } from "@/lib/supabase";
 import type { DbProject, SiteSettings } from "@/lib/supabase";
 import { projects as fallbackProjects, CATEGORIES } from "@/data/projects";
@@ -49,9 +50,7 @@ function AdminDashboard() {
       <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur">
         <div className="mx-auto max-w-6xl px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-accent">
-              <span className="block h-1.5 w-2.5 rounded-sm bg-foreground" />
-            </span>
+            <img src={logoUrl} alt="Sprrintly" className="h-7 w-7 rounded-full object-cover" />
             <span className="font-semibold tracking-tight text-sm">Sprrintly CMS</span>
           </div>
           <div className="flex items-center gap-3">

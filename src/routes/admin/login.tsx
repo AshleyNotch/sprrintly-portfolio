@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import logoUrl from "@/assets/logo.avif";
 
 export const Route = createFileRoute("/admin/login")({
   component: LoginPage,
@@ -36,9 +37,7 @@ function LoginPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2 mb-10 justify-center">
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-accent">
-            <span className="block h-2 w-3 rounded-sm bg-foreground" />
-          </span>
+          <img src={logoUrl} alt="Sprrintly" className="h-8 w-8 rounded-full object-cover" />
           <span className="font-semibold tracking-tight text-lg">Sprrintly CMS</span>
         </div>
 
