@@ -81,10 +81,10 @@ function PortfolioPage() {
   };
 
   const heroTitle = settings.hero_title ?? "Portfolio.";
-  const heroSubtitle = settings.hero_subtitle ?? "Real projects, real outcomes.";
+  const heroSubtitle = settings.hero_subtitle ?? "Real design for ANZ startups.";
   const heroBody =
     settings.hero_body ??
-    "A small selection of recent work — websites, brand systems and product UI shipped for ANZ startups.";
+    "A handpicked selection of websites, branding, pitch decks and product UI delivered unlimited and async for early-stage ANZ founders.";
   const footerText = settings.footer_text ?? "Built for ANZ startups.";
 
   return (
@@ -113,8 +113,7 @@ function PortfolioPage() {
       {/* Hero */}
       <section className="mx-auto max-w-6xl px-6 pt-10 pb-12">
         <div className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-          <span className="h-2 w-2 rounded-full bg-accent" /> Selected work
-          2023 — 2026
+          <span className="h-2 w-2 rounded-full bg-accent" /> Selected work • 2023 – 2026
         </div>
         <h1
           className="mt-5 text-5xl md:text-7xl font-semibold tracking-tight leading-[1.02]"

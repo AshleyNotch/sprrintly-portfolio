@@ -145,6 +145,17 @@ function ProjectsTab() {
     setProjects((prev) => prev.filter((p) => p.id !== id));
   };
 
+  const handleDuplicate = (p: Project) => {
+    const copy: Project = {
+      ...p,
+      id: "",
+      title: p.title + " (Copy)",
+    };
+    setEditTarget(copy);
+    setIsNew(true);
+    setDialogOpen(true);
+  };
+
   const handleSave = async (p: Project) => {
     const id = isNew ? slugify(p.title) || `project-${Date.now()}` : p.id;
     const row = projectToDb({ ...p, id }, isNew ? projects.length : projects.findIndex((x) => x.id === p.id));
@@ -199,6 +210,13 @@ function ProjectsTab() {
                   className="rounded-full border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted transition"
                 >
                   Edit
+                </button>
+                <button
+                  onClick={() => handleDuplicate(p)}
+                  className="rounded-full border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted transition"
+                  title="Duplicate project"
+                >
+                  Duplicate
                 </button>
                 <button
                   onClick={() => handleDelete(p.id)}
@@ -416,16 +434,16 @@ function SettingsTab() {
           </Field>
           <Field label="Sub-headline">
             <Input
-              value={settings.hero_subtitle ?? "Real projects, real outcomes."}
+              value={settings.hero_subtitle ?? "Real design for ANZ startups."}
               onChange={(v) => set("hero_subtitle", v)}
-              placeholder="Real projects, real outcomes."
+              placeholder="Real design for ANZ startups."
             />
           </Field>
           <Field label="Body text">
             <Textarea
               value={settings.hero_body ?? ""}
               onChange={(v) => set("hero_body", v)}
-              placeholder="A small selection of recent work…"
+              placeholder="A handpicked selection of websites, branding, pitch decks and product UI delivered unlimited and async for early-stage ANZ founders."
               rows={3}
             />
           </Field>
