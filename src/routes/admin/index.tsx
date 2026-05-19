@@ -543,11 +543,11 @@ function ImageField({ value, onChange, compact = false }: ImageFieldProps) {
     setUploading(true);
     const ext = file.name.split(".").pop() ?? "jpg";
     const path = `uploads/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("portfolio").upload(path, file, { upsert: true });
+    const { error } = await supabase.storage.from("Portfolio").upload(path, file, { upsert: true });
     if (error) {
       alert("Upload failed: " + error.message);
     } else {
-      const { data } = supabase.storage.from("portfolio").getPublicUrl(path);
+      const { data } = supabase.storage.from("Portfolio").getPublicUrl(path);
       onChange(data.publicUrl);
     }
     setUploading(false);
