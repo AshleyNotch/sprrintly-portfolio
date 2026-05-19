@@ -21,11 +21,27 @@ function slugify(s: string) {
 function AdminDashboard() {
   const navigate = useNavigate();
   const [tab, setTab] = useState<"projects" | "settings">("projects");
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) navigate({ to: "/admin/login" });
+      else setChecking(false);
+    }).catch(() => navigate({ to: "/admin/login" }));
+  }, [navigate]);
 
   const logout = async () => {
     await supabase.auth.signOut();
     navigate({ to: "/admin/login" });
   };
+
+  if (checking) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-sm text-muted-foreground">Loading…</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
