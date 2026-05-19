@@ -17,8 +17,7 @@ export function ProjectModal({ project, open, onOpenChange }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-w-4xl p-0 overflow-hidden gap-0 max-h-[92vh] overflow-y-auto rounded-2xl"
-        showCloseButton={false}
+        className="max-w-4xl p-0 overflow-hidden gap-0 max-h-[92vh] overflow-y-auto rounded-2xl [&>button.absolute]:hidden"
       >
         <VisuallyHidden>
           <DialogTitle>{project.title}</DialogTitle>
