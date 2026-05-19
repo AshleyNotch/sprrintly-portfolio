@@ -92,6 +92,7 @@ function ProjectsTab() {
   const [editTarget, setEditTarget] = useState<Project | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const load = async () => {
     setLoading(true);
@@ -139,9 +140,10 @@ function ProjectsTab() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Delete this project?")) return;
-    await supabase.from("projects").delete().eq("id", id);
+    const { error } = await supabase.from("projects").delete().eq("id", id);
+    if (error) { alert("Delete failed: " + error.message); return; }
     setProjects((prev) => prev.filter((p) => p.id !== id));
+    setConfirmDeleteId(null);
   };
 
   const handleDuplicate = (p: Project) => {
@@ -217,12 +219,30 @@ function ProjectsTab() {
                 >
                   Duplicate
                 </button>
-                <button
-                  onClick={() => handleDelete(p.id)}
-                  className="rounded-full border border-destructive/30 text-destructive px-3 py-1.5 text-xs font-medium hover:bg-destructive/10 transition"
-                >
-                  Delete
-                </button>
+                {confirmDeleteId === p.id ? (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-muted-foreground">Sure?</span>
+                    <button
+                      onClick={() => handleDelete(p.id)}
+                      className="rounded-full bg-destructive text-white px-3 py-1.5 text-xs font-medium hover:opacity-90 transition"
+                    >
+                      Yes, delete
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteId(null)}
+                      className="rounded-full border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmDeleteId(p.id)}
+                    className="rounded-full border border-destructive/30 text-destructive px-3 py-1.5 text-xs font-medium hover:bg-destructive/10 transition"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             </div>
           ))}
