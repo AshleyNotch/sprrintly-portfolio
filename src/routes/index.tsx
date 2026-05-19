@@ -9,6 +9,7 @@ import { TickerSection } from "@/components/Ticker";
 import { supabase, dbToProject, fetchSettings } from "@/lib/supabase";
 import type { DbProject, SiteSettings } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
+import { parseVideoUrl } from "@/lib/video";
 
 export const Route = createFileRoute("/")({
   component: PortfolioPage,
@@ -155,12 +156,27 @@ function PortfolioPage() {
               className="group text-left"
             >
               <div className="relative overflow-hidden rounded-2xl bg-muted aspect-[16/11]">
-                <img
-                  src={p.banner}
-                  alt={p.title}
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-                  loading="lazy"
-                />
+                {(() => {
+                  const video = p.videoUrl ? parseVideoUrl(p.videoUrl) : null;
+                  const src = video?.thumbnailUrl ?? p.banner;
+                  return (
+                    <>
+                      <img
+                        src={src}
+                        alt={p.title}
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+                        loading="lazy"
+                      />
+                      {video && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                          <div className="w-12 h-12 rounded-full bg-white/90 backdrop-blur flex items-center justify-center shadow-lg">
+                            <div style={{ width: 0, height: 0, borderLeft: "14px solid #0a0a0a", borderTop: "8px solid transparent", borderBottom: "8px solid transparent", marginLeft: 3 }} />
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
                 <div className="absolute top-4 left-4 flex flex-col gap-1.5">
                   <span className="rounded-full bg-background/90 backdrop-blur px-3 py-1 text-xs font-medium text-foreground w-fit">
                     {p.categories[0]}

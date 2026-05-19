@@ -23,6 +23,7 @@ export type DbProject = {
   testimonial_role: string;
   testimonial_avatar: string | null;
   client_type: string;
+  video_url: string | null;
   sort_order: number;
   updated_at: string;
 };
@@ -57,6 +58,7 @@ export function dbToProject(p: DbProject): Project {
       avatar: p.testimonial_avatar ?? undefined,
     },
     clientType: (p.client_type === "retainer" ? "retainer" : "oneoff"),
+    videoUrl: p.video_url ?? undefined,
   };
 }
 
@@ -78,6 +80,7 @@ export function projectToDb(p: Project, sortOrder: number): Omit<DbProject, "upd
     testimonial_role: p.testimonial.role,
     testimonial_avatar: p.testimonial.avatar ?? null,
     client_type: p.clientType,
+    video_url: p.videoUrl ?? null,
     sort_order: sortOrder,
   };
 }

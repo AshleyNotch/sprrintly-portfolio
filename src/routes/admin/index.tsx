@@ -145,6 +145,7 @@ function ProjectsTab() {
       tools: [],
       testimonial: { quote: "", author: "", role: "" },
       clientType: "oneoff",
+      videoUrl: "",
     });
     setIsNew(true);
     setDialogOpen(true);
@@ -410,7 +411,10 @@ function ProjectDialog({ project, isNew, onSave, onClose }: ProjectDialogProps) 
             <Field label="Case study gallery images (1–3)">
               <ImagesField images={p.images} onChange={(imgs) => set("images", imgs)} />
             </Field>
-            <Field label="Live preview URL">
+            <Field label="Video URL (YouTube or Vimeo — replaces image in hero)">
+              <Input value={p.videoUrl ?? ""} onChange={(v) => set("videoUrl", v)} placeholder="https://youtube.com/watch?v=... or https://vimeo.com/..." />
+            </Field>
+            <Field label="Live preview URL (leave blank for branding/logo projects)">
               <Input value={p.livePreview} onChange={(v) => set("livePreview", v)} placeholder="https://..." />
             </Field>
           </Section>

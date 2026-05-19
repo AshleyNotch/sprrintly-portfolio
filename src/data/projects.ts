@@ -12,6 +12,7 @@ export type Project = {
   tools: string[];
   testimonial: { quote: string; author: string; role: string; avatar?: string };
   clientType: "retainer" | "oneoff";
+  videoUrl?: string;
 };
 
 export const CATEGORIES = [

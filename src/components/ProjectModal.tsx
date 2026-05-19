@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Project } from "@/data/projects";
+import { parseVideoUrl } from "@/lib/video";
 
 /* Simple markdown renderer — handles bullets, bold, italic, line breaks */
 function MarkdownText({ text, className }: { text: string; className?: string }) {
@@ -108,25 +109,29 @@ export function ProjectModal({ project, open, onOpenChange }: Props) {
                 <span style={{ color: "#0a0a0a", fontWeight: 500 }}>{p.client}</span>
               </div>
               <div className="cs-topbar-actions">
-                <a
-                  className="cs-btn cs-btn-ghost"
-                  href={p.livePreview}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Share
-                </a>
-                <a
-                  className="cs-btn cs-btn-primary"
-                  href={p.livePreview}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Live Preview
-                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                    <path d="M5 11L11 5M11 5H6M11 5V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </a>
+                {p.livePreview && (
+                  <a
+                    className="cs-btn cs-btn-ghost"
+                    href={p.livePreview}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Share
+                  </a>
+                )}
+                {p.livePreview && (
+                  <a
+                    className="cs-btn cs-btn-primary"
+                    href={p.livePreview}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Live Preview
+                    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                      <path d="M5 11L11 5M11 5H6M11 5V10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </a>
+                )}
               </div>
             </div>
 
@@ -153,8 +158,23 @@ export function ProjectModal({ project, open, onOpenChange }: Props) {
               </header>
 
               {/* Hero image */}
+              {/* Hero media — video embed or banner image */}
               <div className="cs-hero-img">
-                <img src={p.banner} alt={p.title} />
+                {(() => {
+                  const video = p.videoUrl ? parseVideoUrl(p.videoUrl) : null;
+                  if (video) {
+                    return (
+                      <iframe
+                        src={video.embedUrl}
+                        title={p.title}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        style={{ width: "100%", height: "100%", border: "none", display: "block" }}
+                      />
+                    );
+                  }
+                  return <img src={p.banner} alt={p.title} />;
+                })()}
               </div>
 
               {/* Meta strip */}
