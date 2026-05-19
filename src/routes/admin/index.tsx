@@ -122,6 +122,7 @@ function ProjectsTab() {
       client: "",
       categories: [],
       banner: "",
+      images: [],
       livePreview: "",
       problem: "",
       solution: "",
@@ -361,8 +362,11 @@ function ProjectDialog({ project, isNew, onSave, onClose }: ProjectDialogProps) 
 
           {/* Media & links */}
           <Section title="Media & links">
-            <Field label="Banner image">
+            <Field label="Banner image (shown on portfolio grid)">
               <ImageField value={p.banner} onChange={(v) => set("banner", v)} />
+            </Field>
+            <Field label="Case study gallery images (1–3)">
+              <ImagesField images={p.images} onChange={(imgs) => set("images", imgs)} />
             </Field>
             <Field label="Live preview URL">
               <Input value={p.livePreview} onChange={(v) => set("livePreview", v)} placeholder="https://..." />
@@ -594,7 +598,16 @@ function Textarea({ value, onChange, placeholder, rows = 3 }: { value: string; o
   );
 }
 
-/* ---- Image field with URL input + file upload ---- */
+/* ---- Single image field (URL + upload + drop zone) ---- */
+
+async function uploadToStorage(file: File): Promise<string | null> {
+  if (!file.type.startsWith("image/")) return null;
+  const ext = file.name.split(".").pop() ?? "jpg";
+  const path = `uploads/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await supabase.storage.from("Portfolio").upload(path, file, { upsert: true });
+  if (error) { alert("Upload failed: " + error.message); return null; }
+  return supabase.storage.from("Portfolio").getPublicUrl(path).data.publicUrl;
+}
 
 interface ImageFieldProps {
   value: string;
@@ -606,43 +619,26 @@ function ImageField({ value, onChange, compact = false }: ImageFieldProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  // local display state — fixes stale value on duplicate
+  const [display, setDisplay] = useState(value);
+  useEffect(() => { setDisplay(value); }, [value]);
 
-  const upload = useCallback(async (file: File) => {
-    if (!file.type.startsWith("image/")) return;
+  const handleUrl = (url: string) => { setDisplay(url); onChange(url); };
+
+  const doUpload = async (file: File) => {
     setUploading(true);
-    const ext = file.name.split(".").pop() ?? "jpg";
-    const path = `uploads/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-    const { error } = await supabase.storage.from("Portfolio").upload(path, file, { upsert: true });
-    if (error) {
-      alert("Upload failed: " + error.message);
-    } else {
-      const { data } = supabase.storage.from("Portfolio").getPublicUrl(path);
-      onChange(data.publicUrl);
-    }
+    const url = await uploadToStorage(file);
+    if (url) handleUrl(url);
     setUploading(false);
-  }, [onChange]);
-
-  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) upload(file);
-    e.target.value = "";
-  };
-
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) upload(file);
   };
 
   return (
     <div className="space-y-2">
-      {/* URL input row */}
       <div className="flex gap-2">
         <input
           type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
+          value={display}
+          onChange={(e) => handleUrl(e.target.value)}
           placeholder="https://... or upload below"
           className="flex-1 rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
         />
@@ -654,23 +650,21 @@ function ImageField({ value, onChange, compact = false }: ImageFieldProps) {
         >
           {uploading ? "Uploading…" : "Upload"}
         </button>
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFileChange} />
+        <input ref={fileRef} type="file" accept="image/*" className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) doUpload(f); e.target.value = ""; }} />
       </div>
 
-      {/* Drop zone — shown when no image or always for banner */}
       {!compact && (
         <div
           onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
-          onDrop={onDrop}
+          onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) doUpload(f); }}
           onClick={() => fileRef.current?.click()}
-          className={`relative cursor-pointer rounded-xl border-2 border-dashed transition overflow-hidden ${
-            dragOver ? "border-foreground bg-muted" : "border-border hover:border-foreground/40"
-          }`}
+          className={`relative cursor-pointer rounded-xl border-2 border-dashed transition overflow-hidden ${dragOver ? "border-foreground bg-muted" : "border-border hover:border-foreground/40"}`}
         >
-          {value ? (
+          {display ? (
             <div className="relative">
-              <img src={value} alt="preview" className="h-36 w-full object-cover" />
+              <img src={display} alt="preview" className="h-36 w-full object-cover" />
               <div className="absolute inset-0 bg-black/0 hover:bg-black/30 transition flex items-center justify-center opacity-0 hover:opacity-100">
                 <span className="text-white text-xs font-medium bg-black/60 rounded-full px-3 py-1.5">Replace image</span>
               </div>
@@ -686,10 +680,75 @@ function ImageField({ value, onChange, compact = false }: ImageFieldProps) {
         </div>
       )}
 
-      {/* Compact avatar preview */}
-      {compact && value && (
-        <img src={value} alt="avatar" className="h-10 w-10 rounded-full object-cover" />
+      {compact && display && (
+        <img src={display} alt="avatar" className="h-10 w-10 rounded-full object-cover" />
       )}
+    </div>
+  );
+}
+
+/* ---- Multi-image field (1–3 gallery images) ---- */
+
+function ImagesField({ images, onChange }: { images: string[]; onChange: (imgs: string[]) => void }) {
+  const [uploading, setUploading] = useState<number | null>(null);
+  const fileRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
+  const slots = Math.min(3, Math.max(1, images.length + (images.length < 3 ? 1 : 0)));
+  const arr = [...images, ...Array(3).fill("")].slice(0, 3);
+
+  const update = (i: number, url: string) => {
+    const next = [...arr]; next[i] = url;
+    onChange(next.filter(Boolean));
+  };
+
+  const doUpload = async (i: number, file: File) => {
+    setUploading(i);
+    const url = await uploadToStorage(file);
+    if (url) update(i, url);
+    setUploading(null);
+  };
+
+  const remove = (i: number) => {
+    const next = arr.filter((_, idx) => idx !== i).filter(Boolean);
+    onChange(next);
+  };
+
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: slots }).map((_, i) => (
+        <div key={i} className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground font-medium">Image {i + 1}{i === 0 ? " (required)" : " (optional)"}</span>
+            {arr[i] && i > 0 && (
+              <button type="button" onClick={() => remove(i)} className="text-xs text-destructive hover:underline">Remove</button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={arr[i] ?? ""}
+              onChange={(e) => update(i, e.target.value)}
+              placeholder="https://..."
+              className="flex-1 rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+            <button
+              type="button"
+              onClick={() => fileRefs[i].current?.click()}
+              disabled={uploading === i}
+              className="flex-shrink-0 rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm font-medium hover:bg-muted transition disabled:opacity-50 whitespace-nowrap"
+            >
+              {uploading === i ? "Uploading…" : "Upload"}
+            </button>
+            <input ref={fileRefs[i]} type="file" accept="image/*" className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) doUpload(i, f); e.target.value = ""; }} />
+          </div>
+          {arr[i] && (
+            <div className="rounded-xl overflow-hidden h-28 bg-muted">
+              <img src={arr[i]} alt={`gallery ${i + 1}`} className="h-full w-full object-cover" />
+            </div>
+          )}
+        </div>
+      ))}
+      <p className="text-xs text-muted-foreground">These images appear in the case study gallery (max 3). First image is always required.</p>
     </div>
   );
 }

@@ -1,6 +1,49 @@
 import { useEffect, useRef, useState } from "react";
 import type { Project } from "@/data/projects";
 
+/* Simple markdown renderer — handles bullets, bold, italic, line breaks */
+function MarkdownText({ text, className }: { text: string; className?: string }) {
+  const lines = text.split("\n");
+  const blocks: React.ReactNode[] = [];
+  let listItems: string[] = [];
+
+  const flushList = () => {
+    if (listItems.length === 0) return;
+    blocks.push(
+      <ul key={blocks.length} className="list-disc pl-5 space-y-1">
+        {listItems.map((item, i) => <li key={i}>{inlineMarkdown(item)}</li>)}
+      </ul>
+    );
+    listItems = [];
+  };
+
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    const isBullet = /^(\s*[-•*]\s+)/.test(line);
+    if (isBullet) {
+      listItems.push(line.replace(/^\s*[-•*]\s+/, ""));
+    } else {
+      flushList();
+      if (line.trim()) blocks.push(<p key={blocks.length}>{inlineMarkdown(line)}</p>);
+      else if (blocks.length > 0) blocks.push(<br key={blocks.length} />);
+    }
+  }
+  flushList();
+
+  return <div className={className}>{blocks}</div>;
+}
+
+function inlineMarkdown(text: string): React.ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**"))
+      return <strong key={i}>{part.slice(2, -2)}</strong>;
+    if (part.startsWith("*") && part.endsWith("*"))
+      return <em key={i}>{part.slice(1, -1)}</em>;
+    return part;
+  });
+}
+
 interface Props {
   project: Project | null;
   open: boolean;
@@ -98,7 +141,7 @@ export function ProjectModal({ project, open, onOpenChange }: Props) {
                   <span>{p.client}</span>
                 </div>
                 <h1 className="cs-title">{p.title}</h1>
-                <p className="cs-subtitle">{p.problem}</p>
+                <MarkdownText text={p.problem} className="cs-subtitle" />
               </header>
 
               {/* Hero image */}
@@ -127,7 +170,7 @@ export function ProjectModal({ project, open, onOpenChange }: Props) {
                 <div className="cs-section-grid">
                   <div className="cs-section-label">Overview</div>
                   <div>
-                    <p className="cs-lede">{p.solution}</p>
+                    <MarkdownText text={p.solution} className="cs-lede" />
                   </div>
                 </div>
               </section>
@@ -138,36 +181,36 @@ export function ProjectModal({ project, open, onOpenChange }: Props) {
                   <div className="cs-section-label">The challenge</div>
                   <div>
                     <h3 className="cs-section-h3">What the project had to solve.</h3>
-                    <p className="cs-body-text">{p.challenge}</p>
+                    <MarkdownText text={p.challenge} className="cs-body-text" />
                   </div>
                 </div>
               </section>
 
-              {/* Process gallery */}
-              <section className="cs-section">
-                <div className="cs-section-grid">
-                  <div className="cs-section-label">Process</div>
-                  <div>
-                    <h3 className="cs-section-h3">From brief to build.</h3>
-                    <p className="cs-body-text" style={{ marginBottom: 24 }}>
-                      A selection of frames, explorations, and the surfaces that made it into the final build.
-                    </p>
-                    <div className="cs-gallery">
-                      <div className="cs-gallery-wide">
-                        <img src={p.banner} alt={`${p.title} process`} />
-                      </div>
-                      <div className="cs-gallery-halves">
-                        <div className="cs-gallery-half">
-                          <img src={p.banner} alt={`${p.title} detail A`} style={{ objectPosition: "top" }} />
+              {/* Gallery */}
+              {(() => {
+                const imgs = p.images && p.images.length > 0 ? p.images : [p.banner];
+                return (
+                  <section className="cs-section">
+                    <div className="cs-section-grid">
+                      <div className="cs-section-label">Gallery</div>
+                      <div className="cs-gallery">
+                        <div className="cs-gallery-wide">
+                          <img src={imgs[0]} alt={`${p.title} 1`} />
                         </div>
-                        <div className="cs-gallery-half">
-                          <img src={p.banner} alt={`${p.title} detail B`} style={{ objectPosition: "bottom" }} />
-                        </div>
+                        {imgs.length > 1 && (
+                          <div className="cs-gallery-halves">
+                            {imgs.slice(1).map((src, i) => (
+                              <div key={i} className="cs-gallery-half">
+                                <img src={src} alt={`${p.title} ${i + 2}`} />
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                </div>
-              </section>
+                  </section>
+                );
+              })()}
 
               {/* Tools */}
               <section className="cs-section">

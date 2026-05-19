@@ -4,6 +4,7 @@ export type Project = {
   client: string;
   categories: string[];
   banner: string;
+  images: string[];
   livePreview: string;
   problem: string;
   solution: string;
@@ -29,6 +30,7 @@ export const projects: Project[] = [
     categories: ["Branding"],
     banner:
       "https://framerusercontent.com/images/dyKAmcSn5frmMprV4edgfrdVLA.jpg?width=1600&height=1000",
+    images: [],
     livePreview: "https://sprrintly.io/",
     problem:
       "Harmonic had a generic visual identity that failed to reflect their premium positioning in the wellness space.",
@@ -53,6 +55,7 @@ export const projects: Project[] = [
     categories: ["Web Design"],
     banner:
       "https://framerusercontent.com/images/Bz1f3EDCqjX6ogtibruM6kHs7Y.jpg?width=1600&height=1000",
+    images: [],
     livePreview: "https://sprrintly.io/",
     problem:
       "AdUp's old site was converting poorly and didn't communicate the product's value to performance marketers.",
@@ -75,6 +78,7 @@ export const projects: Project[] = [
     categories: ["UI/UX"],
     banner:
       "https://framerusercontent.com/images/FlGWMJnifRlqJqPcdGrSDnhQj8.jpg?width=1600&height=1000",
+    images: [],
     livePreview: "https://sprrintly.io/",
     problem:
       "Users dropped off during onboarding because the audio therapy flow felt clinical and overwhelming.",
@@ -97,6 +101,7 @@ export const projects: Project[] = [
     categories: ["Framer"],
     banner:
       "https://framerusercontent.com/images/6oNDqkXZHWzffUsOz1tVARUjIww.jpg?width=1600&height=1000",
+    images: [],
     livePreview: "https://sprrintly.io/",
     problem:
       "Buildform needed a flagship site live in 10 days for an investor demo — agencies quoted 8 weeks.",
@@ -119,6 +124,7 @@ export const projects: Project[] = [
     categories: ["UI/UX"],
     banner:
       "https://framerusercontent.com/images/QNZreLR0Njc4DHr0nsMRufTBYwc.webp?width=1600&height=1000",
+    images: [],
     livePreview: "https://sprrintly.io/",
     problem:
       "An AI task manager with no clear visual language — every screen felt like a different product.",
@@ -141,6 +147,7 @@ export const projects: Project[] = [
     categories: ["Motion"],
     banner:
       "https://framerusercontent.com/images/tyQLPNGNTR7gBMBURMt0FNKpAA.png?width=1600&height=1000",
+    images: [],
     livePreview: "https://sprrintly.io/",
     problem:
       "Static ads were under-performing on TikTok and Reels for a coding bootcamp audience.",

@@ -12,6 +12,7 @@ export type DbProject = {
   client: string;
   categories: string[];
   banner: string;
+  images: string[];
   live_preview: string;
   problem: string;
   solution: string;
@@ -42,6 +43,7 @@ export function dbToProject(p: DbProject): Project {
     client: p.client,
     categories: p.categories ?? [],
     banner: p.banner,
+    images: p.images ?? [],
     livePreview: p.live_preview,
     problem: p.problem,
     solution: p.solution,
@@ -63,6 +65,7 @@ export function projectToDb(p: Project, sortOrder: number): Omit<DbProject, "upd
     client: p.client,
     categories: p.categories,
     banner: p.banner,
+    images: p.images,
     live_preview: p.livePreview,
     problem: p.problem,
     solution: p.solution,
