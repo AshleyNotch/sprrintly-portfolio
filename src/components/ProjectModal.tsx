@@ -134,6 +134,14 @@ export function ProjectModal({ project, open, onOpenChange }: Props) {
               {/* Hero */}
               <header className="cs-hero">
                 <div className="cs-hero-eyebrow">
+                  {p.clientType === "retainer" ? (
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 10px", borderRadius: 999, background: "#22c55e", color: "#fff", fontSize: 12, fontWeight: 500 }}>
+                      <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#fff", animation: "pulse 2s infinite" }} />
+                      Active Retainer
+                    </span>
+                  ) : (
+                    <span className="cs-tag">One-Off</span>
+                  )}
                   {p.categories.map((c) => (
                     <span key={c} className="cs-tag">{c}</span>
                   ))}

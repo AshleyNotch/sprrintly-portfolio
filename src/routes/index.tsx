@@ -62,13 +62,17 @@ function PortfolioPage() {
     }
   }, [settings]);
 
-  const filtered = useMemo(
-    () =>
-      filter === "All"
-        ? projects
-        : projects.filter((p) => p.categories.includes(filter)),
-    [filter, projects],
-  );
+  const filtered = useMemo(() => {
+    const base = filter === "All"
+      ? projects
+      : projects.filter((p) => p.categories.includes(filter));
+    // Retainers always first
+    return [...base].sort((a, b) => {
+      if (a.clientType === "retainer" && b.clientType !== "retainer") return -1;
+      if (a.clientType !== "retainer" && b.clientType === "retainer") return 1;
+      return 0;
+    });
+  }, [filter, projects]);
 
   const openProject = (p: Project) => {
     setActive(p);
@@ -145,10 +149,20 @@ function PortfolioPage() {
                   className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
                   loading="lazy"
                 />
-                <div className="absolute top-4 left-4">
-                  <span className="rounded-full bg-background/90 backdrop-blur px-3 py-1 text-xs font-medium text-foreground">
+                <div className="absolute top-4 left-4 flex flex-col gap-1.5">
+                  <span className="rounded-full bg-background/90 backdrop-blur px-3 py-1 text-xs font-medium text-foreground w-fit">
                     {p.categories[0]}
                   </span>
+                  {p.clientType === "retainer" ? (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/90 backdrop-blur px-3 py-1 text-xs font-medium text-white w-fit">
+                      <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" />
+                      Active Retainer
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-black/50 backdrop-blur px-3 py-1 text-xs font-medium text-white/80 w-fit">
+                      One-Off
+                    </span>
+                  )}
                 </div>
                 <div className="absolute bottom-4 right-4 opacity-0 group-hover:opacity-100 transition">
                   <span className="inline-flex items-center gap-1 rounded-full bg-foreground text-background px-3 py-1.5 text-xs font-medium">

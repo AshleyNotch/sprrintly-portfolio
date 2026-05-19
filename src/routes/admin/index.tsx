@@ -145,6 +145,7 @@ function ProjectsTab() {
       challenge: "",
       tools: [],
       testimonial: { quote: "", author: "", role: "" },
+      clientType: "oneoff",
     });
     setIsNew(true);
     setDialogOpen(true);
@@ -220,7 +221,15 @@ function ProjectsTab() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-sm truncate">{p.title}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{p.client} · {p.categories.join(", ")}</p>
+                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                  <p className="text-xs text-muted-foreground">{p.client} · {p.categories.join(", ")}</p>
+                  {p.clientType === "retainer" && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 text-[11px] font-medium">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                      Active Retainer
+                    </span>
+                  )}
+                </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
@@ -336,6 +345,24 @@ function ProjectDialog({ project, isNew, onSave, onClose }: ProjectDialogProps) 
             </Field>
             <Field label="Client">
               <Input value={p.client} onChange={(v) => set("client", v)} placeholder="Harmonic" />
+            </Field>
+            <Field label="Client type">
+              <div className="flex items-center justify-between rounded-xl border border-border p-3.5">
+                <div>
+                  <p className="text-sm font-medium">
+                    {p.clientType === "retainer" ? "Active Retainer" : "One-Off Project"}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {p.clientType === "retainer"
+                      ? "Ongoing client — shown first in portfolio"
+                      : "Single engagement"}
+                  </p>
+                </div>
+                <ToggleSwitch
+                  checked={p.clientType === "retainer"}
+                  onChange={(v) => set("clientType", v ? "retainer" : "oneoff")}
+                />
+              </div>
             </Field>
             <Field label="Categories">
               <div className="flex flex-wrap gap-2 pt-1">
@@ -571,6 +598,24 @@ function SettingsTab() {
 /* ============================================================
    SHARED UI PRIMITIVES
    ============================================================ */
+
+function ToggleSwitch({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none"
+      style={{ background: checked ? "#22c55e" : "#e5e7eb" }}
+    >
+      <span
+        className="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
+        style={{ transform: checked ? "translateX(22px)" : "translateX(2px)" }}
+      />
+    </button>
+  );
+}
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
