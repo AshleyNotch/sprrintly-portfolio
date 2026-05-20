@@ -1,7 +1,7 @@
 export type VideoInfo = {
   embedUrl: string;
   thumbnailUrl: string | null;
-  type: "youtube" | "vimeo";
+  type: "youtube" | "vimeo" | "gdrive";
 };
 
 export function parseVideoUrl(url: string): VideoInfo | null {
@@ -26,6 +26,18 @@ export function parseVideoUrl(url: string): VideoInfo | null {
       embedUrl: `https://player.vimeo.com/video/${vimeo[1]}?byline=0&portrait=0&title=0`,
       thumbnailUrl: null,
       type: "vimeo",
+    };
+  }
+
+  // Google Drive — /file/d/ID/view or /open?id=ID
+  const gd =
+    url.match(/drive\.google\.com\/file\/d\/([A-Za-z0-9_-]+)/) ||
+    url.match(/drive\.google\.com\/open\?id=([A-Za-z0-9_-]+)/);
+  if (gd) {
+    return {
+      embedUrl: `https://drive.google.com/file/d/${gd[1]}/preview`,
+      thumbnailUrl: null,
+      type: "gdrive",
     };
   }
 
