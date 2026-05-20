@@ -816,68 +816,93 @@ function ImageField({ value, onChange, compact = false }: ImageFieldProps) {
   );
 }
 
-/* ---- Multi-image field (1–3 gallery images) ---- */
+/* ---- Multi-image field (unlimited gallery images) ---- */
 
-function ImagesField({ images, onChange }: { images: string[]; onChange: (imgs: string[]) => void }) {
-  const [uploading, setUploading] = useState<number | null>(null);
-  const fileRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
-  const slots = Math.min(3, Math.max(1, images.length + (images.length < 3 ? 1 : 0)));
-  const arr = [...images, ...Array(3).fill("")].slice(0, 3);
+function ImageSlot({ index, value, onUpdate, onRemove }: {
+  index: number;
+  value: string;
+  onUpdate: (url: string) => void;
+  onRemove: () => void;
+}) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
-  const update = (i: number, url: string) => {
-    const next = [...arr]; next[i] = url;
-    onChange(next.filter(Boolean));
-  };
-
-  const doUpload = async (i: number, file: File) => {
-    setUploading(i);
+  const doUpload = async (file: File) => {
+    setUploading(true);
     const url = await uploadToStorage(file);
-    if (url) update(i, url);
-    setUploading(null);
-  };
-
-  const remove = (i: number) => {
-    const next = arr.filter((_, idx) => idx !== i).filter(Boolean);
-    onChange(next);
+    if (url) onUpdate(url);
+    setUploading(false);
   };
 
   return (
-    <div className="space-y-3">
-      {Array.from({ length: slots }).map((_, i) => (
-        <div key={i} className="space-y-1.5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground font-medium">Image {i + 1}{i === 0 ? " (required)" : " (optional)"}</span>
-            {arr[i] && i > 0 && (
-              <button type="button" onClick={() => remove(i)} className="text-xs text-destructive hover:underline">Remove</button>
-            )}
-          </div>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={arr[i] ?? ""}
-              onChange={(e) => update(i, e.target.value)}
-              placeholder="https://..."
-              className="flex-1 rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
-            <button
-              type="button"
-              onClick={() => fileRefs[i].current?.click()}
-              disabled={uploading === i}
-              className="flex-shrink-0 rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm font-medium hover:bg-muted transition disabled:opacity-50 whitespace-nowrap"
-            >
-              {uploading === i ? "Uploading…" : "Upload"}
-            </button>
-            <input ref={fileRefs[i]} type="file" accept="image/*" className="hidden"
-              onChange={(e) => { const f = e.target.files?.[0]; if (f) doUpload(i, f); e.target.value = ""; }} />
-          </div>
-          {arr[i] && (
-            <div className="rounded-xl overflow-hidden h-28 bg-muted">
-              <img src={arr[i]} alt={`gallery ${i + 1}`} className="h-full w-full object-cover" />
-            </div>
-          )}
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground font-medium">
+          Image {index + 1}{index === 0 ? " (featured)" : ""}
+        </span>
+        {value && (
+          <button type="button" onClick={onRemove} className="text-xs text-destructive hover:underline">
+            Remove
+          </button>
+        )}
+      </div>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onUpdate(e.target.value)}
+          placeholder="https://... or upload"
+          className="flex-1 rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+        <button
+          type="button"
+          onClick={() => fileRef.current?.click()}
+          disabled={uploading}
+          className="flex-shrink-0 rounded-xl border border-border bg-background px-3.5 py-2.5 text-sm font-medium hover:bg-muted transition disabled:opacity-50 whitespace-nowrap"
+        >
+          {uploading ? "Uploading…" : "Upload"}
+        </button>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) doUpload(f); e.target.value = ""; }}
+        />
+      </div>
+      {value && (
+        <div className="rounded-xl overflow-hidden h-28 bg-muted">
+          <img src={value} alt={`gallery ${index + 1}`} className="h-full w-full object-cover" />
         </div>
+      )}
+    </div>
+  );
+}
+
+function ImagesField({ images, onChange }: { images: string[]; onChange: (imgs: string[]) => void }) {
+  const update = (i: number, url: string) => {
+    const next = [...images]; next[i] = url;
+    onChange(next.filter(Boolean));
+  };
+  const remove = (i: number) => onChange(images.filter((_, idx) => idx !== i));
+
+  // All saved images + one empty slot for the next addition
+  const slots = [...images, ""];
+
+  return (
+    <div className="space-y-3">
+      {slots.map((val, i) => (
+        <ImageSlot
+          key={i}
+          index={i}
+          value={val}
+          onUpdate={(url) => update(i, url)}
+          onRemove={() => remove(i)}
+        />
       ))}
-      <p className="text-xs text-muted-foreground">These images appear in the case study gallery (max 3). First image is always required.</p>
+      <p className="text-xs text-muted-foreground">
+        Images appear as a carousel in the case study. Image 1 also shows on the portfolio grid.
+      </p>
     </div>
   );
 }
