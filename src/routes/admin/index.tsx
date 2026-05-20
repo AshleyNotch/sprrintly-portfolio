@@ -617,11 +617,10 @@ function SettingsTab() {
                     key={n}
                     type="button"
                     onClick={() => set("grid_columns", n)}
-                    className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition ${
-                      active
-                        ? "bg-foreground text-background border-foreground"
-                        : "border-border hover:bg-muted"
-                    }`}
+                    className="flex-1 py-2.5 rounded-xl border text-sm font-medium transition"
+                    style={active
+                      ? { background: "var(--foreground)", color: "var(--background)", borderColor: "var(--foreground)" }
+                      : { borderColor: "var(--border)" }}
                   >
                     {n}
                   </button>
@@ -1055,9 +1054,10 @@ function DirBtn({ active, onClick, children }: { active: boolean; onClick: () =>
     <button
       type="button"
       onClick={onClick}
-      className={`h-9 w-9 flex items-center justify-center rounded-xl border transition text-sm font-medium ${
-        active ? "bg-foreground text-background border-foreground" : "border-border bg-background hover:bg-muted"
-      }`}
+      className="h-9 w-9 flex items-center justify-center rounded-xl border transition text-sm font-medium"
+      style={active
+        ? { background: "var(--foreground)", color: "var(--background)", borderColor: "var(--foreground)" }
+        : { borderColor: "var(--border)" }}
     >
       {children}
     </button>
@@ -1069,9 +1069,10 @@ function AlignBtn({ active, onClick, children }: { active: boolean; onClick: () 
     <button
       type="button"
       onClick={onClick}
-      className={`h-9 flex-1 flex items-center justify-center rounded-xl border transition text-sm ${
-        active ? "bg-foreground text-background border-foreground" : "border-border bg-background hover:bg-muted"
-      }`}
+      className="h-9 flex-1 flex items-center justify-center rounded-xl border transition text-sm"
+      style={active
+        ? { background: "var(--foreground)", color: "var(--background)", borderColor: "var(--foreground)" }
+        : { borderColor: "var(--border)" }}
     >
       {children}
     </button>
@@ -1217,11 +1218,10 @@ function TickerSettingsSection({ config, onChange }: { config: TickerConfig; onC
             key={i}
             type="button"
             onClick={() => setActiveRow(i)}
-            className={`px-3 py-1.5 text-sm rounded-lg font-medium transition ${
-              activeRow === i
-                ? "bg-foreground text-background"
-                : "text-muted-foreground hover:text-foreground hover:bg-muted"
-            }`}
+            className="px-3 py-1.5 text-sm rounded-lg font-medium transition"
+            style={activeRow === i
+              ? { background: "var(--foreground)", color: "var(--background)" }
+              : { color: "var(--muted-foreground)" }}
           >
             Row {i + 1}
           </button>
