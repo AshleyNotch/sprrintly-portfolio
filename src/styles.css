@@ -529,7 +529,20 @@ img { display: block; max-width: 100%; }
 .filters-spacer { flex: 1; }
 .results-count { font-size: 13px; color: var(--p-muted); font-variant-numeric: tabular-nums; }
 
-/* ===== Project grid ===== */
+/* ===== Portfolio grid (dynamic columns via --portfolio-cols) ===== */
+.portfolio-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 768px) {
+  .portfolio-grid {
+    gap: 2rem;
+    grid-template-columns: repeat(var(--portfolio-cols, 2), minmax(0, 1fr));
+  }
+}
+
+/* ===== Project grid (legacy — keep for any residual HTML) ===== */
 .grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

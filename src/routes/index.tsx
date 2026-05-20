@@ -88,13 +88,7 @@ function PortfolioPage() {
   const heroTitle = settings.hero_title ?? "Recent Works";
   const heroSubtitle = settings.hero_subtitle ?? "";
 
-  const GRID_COLS: Record<string, string> = {
-    "1": "grid-cols-1",
-    "2": "grid-cols-1 md:grid-cols-2",
-    "3": "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
-    "4": "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
-  };
-  const gridCols = GRID_COLS[settings.grid_columns ?? "2"] ?? GRID_COLS["2"];
+  const portfolioCols = settings.grid_columns ?? "2";
   const heroBody =
     settings.hero_body ??
     "A small selection of recent work including websites, brand systems and product UI shipped for ANZ startups and all across the globe.";
@@ -150,7 +144,7 @@ function PortfolioPage() {
       {/* Grid */}
       <section className="mx-auto max-w-6xl px-6 py-10 pb-24">
         {loading && (
-          <div className={`grid gap-6 md:gap-8 ${gridCols}`}>
+          <div className="portfolio-grid" style={{ "--portfolio-cols": portfolioCols } as React.CSSProperties}>
             {[...Array(6)].map((_, i) => (
               <div key={i}>
                 <div className="rounded-2xl bg-muted aspect-[16/11] animate-pulse" />
@@ -162,7 +156,7 @@ function PortfolioPage() {
             ))}
           </div>
         )}
-        {!loading && <div className={`grid gap-6 md:gap-8 ${gridCols}`}>
+        {!loading && <div className="portfolio-grid" style={{ "--portfolio-cols": portfolioCols } as React.CSSProperties}>
           {filtered.map((p) => (
             <button
               key={p.id}
