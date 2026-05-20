@@ -37,7 +37,55 @@ export type SiteSettings = {
   font_heading: string;
   footer_text: string;
   category_list: string; // JSON array stored as string
+  ticker_settings: string; // JSON-encoded TickerConfig
 };
+
+export type TickerRowConfig = {
+  images: string[];
+  speed: number;       // 1-200 percent; duration = 6000/speed seconds
+  direction: "left" | "right" | "up" | "down";
+  align: "start" | "center" | "end";
+  gap: number;         // px gap between items
+  padding: number;     // px padding on each item
+  itemWidth: number;   // px
+  itemHeight: number;  // px
+  clipping: boolean;   // edge-fade mask
+  hoverFactor: number; // playback rate = 1/hoverFactor on hover
+};
+
+export type TickerConfig = {
+  rows: [TickerRowConfig, TickerRowConfig, TickerRowConfig];
+};
+
+const BASE_ROW: Omit<TickerRowConfig, "direction" | "speed"> = {
+  images: [],
+  align: "center",
+  gap: 12,
+  padding: 0,
+  itemWidth: 280,
+  itemHeight: 180,
+  clipping: true,
+  hoverFactor: 5,
+};
+
+export const DEFAULT_TICKER_CONFIG: TickerConfig = {
+  rows: [
+    { ...BASE_ROW, speed: 85, direction: "right" },
+    { ...BASE_ROW, speed: 92, direction: "left"  },
+    { ...BASE_ROW, speed: 80, direction: "right" },
+  ],
+};
+
+export function parseTickerConfig(raw: string | undefined): TickerConfig {
+  if (!raw) return DEFAULT_TICKER_CONFIG;
+  try {
+    const parsed = JSON.parse(raw) as TickerConfig;
+    while (parsed.rows.length < 3) parsed.rows.push({ ...BASE_ROW, speed: 85, direction: "right" });
+    return parsed;
+  } catch {
+    return DEFAULT_TICKER_CONFIG;
+  }
+}
 
 export const DEFAULT_CATEGORIES = ["Web Design", "UI/UX", "Branding", "Pitch Deck", "Motion", "Framer"];
 

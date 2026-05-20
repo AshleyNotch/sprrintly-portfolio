@@ -6,8 +6,8 @@ import { ProjectModal } from "@/components/ProjectModal";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { TickerSection } from "@/components/Ticker";
-import { supabase, dbToProject, fetchSettings, parseCategoryList, DEFAULT_CATEGORIES } from "@/lib/supabase";
-import type { DbProject, SiteSettings } from "@/lib/supabase";
+import { supabase, dbToProject, fetchSettings, parseCategoryList, parseTickerConfig, DEFAULT_CATEGORIES } from "@/lib/supabase";
+import type { DbProject, SiteSettings, TickerConfig } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 import { parseVideoUrl } from "@/lib/video";
 
@@ -33,6 +33,7 @@ function PortfolioPage() {
   const [loading, setLoading] = useState(true);
   const [settings, setSettings] = useState<Partial<SiteSettings>>({});
   const [categories, setCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+  const [tickerConfig, setTickerConfig] = useState<TickerConfig | undefined>(undefined);
 
   useEffect(() => {
     Promise.all([
@@ -43,6 +44,7 @@ function PortfolioPage() {
       if (Object.keys(s).length > 0) {
         setSettings(s);
         setCategories(parseCategoryList(s.category_list));
+        setTickerConfig(parseTickerConfig(s.ticker_settings));
       }
       setLoading(false);
     }).catch(() => {
@@ -225,7 +227,7 @@ function PortfolioPage() {
         )}
       </section>
 
-      <TickerSection />
+      <TickerSection config={tickerConfig} />
       <SiteFooter />
 
       <ProjectModal project={active} open={open} onOpenChange={setOpen} />

@@ -152,22 +152,27 @@
   from { transform: translateX(-50%); }
   to   { transform: translateX(0); }
 }
+@keyframes ticker-up {
+  from { transform: translateY(0); }
+  to   { transform: translateY(-50%); }
+}
+@keyframes ticker-down {
+  from { transform: translateY(-50%); }
+  to   { transform: translateY(0); }
+}
 .ticker-wrap {
-  overflow: hidden;
   width: 100%;
-  mask-image: linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%);
 }
 .ticker-track {
   display: flex;
-  gap: 12px;
-  width: max-content;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
   will-change: transform;
 }
-.ticker-track.to-right { animation-name: ticker-right; }
-.ticker-track.to-left  { animation-name: ticker-left; }
+.ticker-track.to-right { animation-name: ticker-right; flex-direction: row; }
+.ticker-track.to-left  { animation-name: ticker-left;  flex-direction: row; }
+.ticker-track.to-up    { animation-name: ticker-up;    flex-direction: column; }
+.ticker-track.to-down  { animation-name: ticker-down;  flex-direction: column; }
 
 .nav-pill-link {
   padding: 6px 12px;

@@ -1,8 +1,8 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import logoUrl from "@/assets/logo.avif";
-import { supabase, dbToProject, projectToDb, fetchSettings, saveSettings, parseCategoryList, DEFAULT_CATEGORIES } from "@/lib/supabase";
-import type { DbProject, SiteSettings } from "@/lib/supabase";
+import { supabase, dbToProject, projectToDb, fetchSettings, saveSettings, parseCategoryList, parseTickerConfig, DEFAULT_CATEGORIES } from "@/lib/supabase";
+import type { DbProject, SiteSettings, TickerRowConfig, TickerConfig } from "@/lib/supabase";
 import { projects as fallbackProjects, CATEGORIES } from "@/data/projects";
 import type { Project } from "@/data/projects";
 
@@ -490,6 +490,9 @@ function SettingsTab() {
   }, []);
 
   const categories = parseCategoryList(settings.category_list);
+  const tickerConfig = parseTickerConfig(settings.ticker_settings);
+  const setTickerConfig = (c: TickerConfig) =>
+    setSettings((s) => ({ ...s, ticker_settings: JSON.stringify(c) }));
 
   const addCategory = () => {
     const trimmed = newCat.trim();
@@ -615,6 +618,13 @@ function SettingsTab() {
               placeholder="Built for ANZ startups."
             />
           </Field>
+        </Section>
+
+        <Section title="Ticker">
+          <p className="text-xs text-muted-foreground -mt-1">
+            Configure the 3 scrolling image rows at the bottom of the home page.
+          </p>
+          <TickerSettingsSection config={tickerConfig} onChange={setTickerConfig} />
         </Section>
 
         <Section title="Categories">
@@ -903,6 +913,303 @@ function ImagesField({ images, onChange }: { images: string[]; onChange: (imgs: 
       <p className="text-xs text-muted-foreground">
         Images appear as a carousel in the case study. Image 1 also shows on the portfolio grid.
       </p>
+    </div>
+  );
+}
+
+/* ============================================================
+   TICKER SETTINGS
+   ============================================================ */
+
+async function uploadToTickerStorage(file: File): Promise<string | null> {
+  if (!file.type.startsWith("image/")) return null;
+  const ext = file.name.split(".").pop() ?? "jpg";
+  const path = `ticker/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const { error } = await supabase.storage.from("Portfolio").upload(path, file, { upsert: true });
+  if (error) { alert("Upload failed: " + error.message); return null; }
+  return supabase.storage.from("Portfolio").getPublicUrl(path).data.publicUrl;
+}
+
+function TickerImageList({ images, onChange }: { images: string[]; onChange: (imgs: string[]) => void }) {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<number | null>(null);
+
+  const doUpload = async (file: File) => {
+    setUploading(true);
+    const url = await uploadToTickerStorage(file);
+    if (url) onChange([...images, url]);
+    setUploading(false);
+  };
+
+  const remove = (i: number) => onChange(images.filter((_, idx) => idx !== i));
+
+  const onDrop = (targetIdx: number) => {
+    if (dragIdx === null || dragIdx === targetIdx) return;
+    const next = [...images];
+    const [moved] = next.splice(dragIdx, 1);
+    next.splice(targetIdx, 0, moved);
+    onChange(next);
+    setDragIdx(null);
+    setDragOver(null);
+  };
+
+  return (
+    <div className="space-y-2">
+      {images.length > 0 && (
+        <div className="grid grid-cols-4 gap-2">
+          {images.map((url, i) => (
+            <div
+              key={i}
+              draggable
+              onDragStart={() => setDragIdx(i)}
+              onDragOver={(e) => { e.preventDefault(); setDragOver(i); }}
+              onDragLeave={() => setDragOver(null)}
+              onDrop={() => onDrop(i)}
+              onDragEnd={() => { setDragIdx(null); setDragOver(null); }}
+              className={`relative group rounded-xl overflow-hidden bg-muted cursor-grab active:cursor-grabbing transition-all ${
+                dragOver === i ? "ring-2 ring-foreground scale-95" : ""
+              } ${dragIdx === i ? "opacity-40" : ""}`}
+              style={{ height: 72 }}
+            >
+              <img src={url} alt="" className="h-full w-full object-cover" draggable={false} />
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition" />
+              <button
+                onClick={() => remove(i)}
+                className="absolute top-1 right-1 h-5 w-5 rounded-full bg-black/70 text-white text-xs opacity-0 group-hover:opacity-100 transition flex items-center justify-center leading-none"
+              >
+                ×
+              </button>
+              <div className="absolute bottom-1 left-1 opacity-0 group-hover:opacity-100 transition">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="white">
+                  <rect y="1" width="12" height="1.5" rx="1"/>
+                  <rect y="5.25" width="12" height="1.5" rx="1"/>
+                  <rect y="9.5" width="12" height="1.5" rx="1"/>
+                </svg>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <button
+        onClick={() => fileRef.current?.click()}
+        disabled={uploading}
+        className="w-full rounded-xl border-2 border-dashed border-border py-3 text-sm text-muted-foreground hover:border-foreground/40 hover:text-foreground transition disabled:opacity-50"
+      >
+        {uploading ? "Uploading…" : "+ Add images"}
+      </button>
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          Array.from(e.target.files ?? []).forEach(doUpload);
+          e.target.value = "";
+        }}
+      />
+      {images.length === 0 && (
+        <p className="text-xs text-muted-foreground">No images yet — upload some or the ticker will use the static fallback images.</p>
+      )}
+    </div>
+  );
+}
+
+function StepButton({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="h-9 w-9 flex items-center justify-center rounded-xl border border-border bg-background hover:bg-muted transition text-base font-medium flex-shrink-0"
+    >
+      {children}
+    </button>
+  );
+}
+
+function DirBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`h-9 w-9 flex items-center justify-center rounded-xl border transition text-sm font-medium ${
+        active ? "bg-foreground text-background border-foreground" : "border-border bg-background hover:bg-muted"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function AlignBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`h-9 flex-1 flex items-center justify-center rounded-xl border transition text-sm ${
+        active ? "bg-foreground text-background border-foreground" : "border-border bg-background hover:bg-muted"
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
+function NumInput({ value, onChange, min = 0, max = 9999, step = 1 }: {
+  value: number; onChange: (v: number) => void; min?: number; max?: number; step?: number;
+}) {
+  return (
+    <input
+      type="number"
+      value={value}
+      min={min}
+      max={max}
+      step={step}
+      onChange={(e) => onChange(Math.min(max, Math.max(min, Number(e.target.value))))}
+      className="w-20 rounded-xl border border-border bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+    />
+  );
+}
+
+function TickerRowEditor({ config, onChange }: { config: TickerRowConfig; onChange: (c: TickerRowConfig) => void }) {
+  const set = <K extends keyof TickerRowConfig>(key: K, value: TickerRowConfig[K]) =>
+    onChange({ ...config, [key]: value });
+
+  return (
+    <div className="space-y-4 pt-2">
+      {/* Images */}
+      <Field label="Children (drag to reorder)">
+        <TickerImageList images={config.images} onChange={(imgs) => set("images", imgs)} />
+      </Field>
+
+      {/* Speed */}
+      <Field label="Speed">
+        <div className="flex items-center gap-2">
+          <div className="flex-1 rounded-xl border border-border bg-background px-3.5 py-2 text-sm font-medium">
+            {config.speed}%
+          </div>
+          <StepButton onClick={() => set("speed", Math.max(1, config.speed - 5))}>−</StepButton>
+          <StepButton onClick={() => set("speed", Math.min(200, config.speed + 5))}>+</StepButton>
+        </div>
+      </Field>
+
+      {/* Direction */}
+      <Field label="Direction">
+        <div className="flex gap-1">
+          {(["left", "right", "up", "down"] as const).map((dir, i) => (
+            <DirBtn key={dir} active={config.direction === dir} onClick={() => set("direction", dir)}>
+              {["←", "→", "↑", "↓"][i]}
+            </DirBtn>
+          ))}
+        </div>
+      </Field>
+
+      {/* Align */}
+      <Field label="Align">
+        <div className="flex gap-1">
+          {(["start", "center", "end"] as const).map((a, i) => (
+            <AlignBtn key={a} active={config.align === a} onClick={() => set("align", a)}>
+              {["⊤", "—", "⊥"][i]}
+            </AlignBtn>
+          ))}
+        </div>
+      </Field>
+
+      {/* Gap */}
+      <Field label="Gap">
+        <div className="flex items-center gap-3">
+          <NumInput value={config.gap} onChange={(v) => set("gap", v)} min={0} max={200} />
+          <input
+            type="range"
+            min={0}
+            max={200}
+            value={config.gap}
+            onChange={(e) => set("gap", Number(e.target.value))}
+            className="flex-1 accent-foreground"
+          />
+        </div>
+      </Field>
+
+      {/* Padding */}
+      <Field label="Padding">
+        <NumInput value={config.padding} onChange={(v) => set("padding", v)} min={0} max={100} />
+      </Field>
+
+      {/* Sizing */}
+      <Field label="Sizing">
+        <div className="flex items-center gap-3">
+          <div className="space-y-1 flex-1">
+            <p className="text-xs text-muted-foreground">Width</p>
+            <NumInput value={config.itemWidth} onChange={(v) => set("itemWidth", v)} min={40} max={800} />
+          </div>
+          <div className="space-y-1 flex-1">
+            <p className="text-xs text-muted-foreground">Height</p>
+            <NumInput value={config.itemHeight} onChange={(v) => set("itemHeight", v)} min={40} max={800} />
+          </div>
+        </div>
+      </Field>
+
+      {/* Clipping */}
+      <Field label="Clipping">
+        <div className="flex items-center justify-between rounded-xl border border-border p-3.5">
+          <div>
+            <p className="text-sm font-medium">Edge fade</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Fades the ticker at the edges</p>
+          </div>
+          <ToggleSwitch checked={config.clipping} onChange={(v) => set("clipping", v)} />
+        </div>
+      </Field>
+
+      {/* Hover */}
+      <Field label="Hover">
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 rounded-xl border border-border bg-background px-3.5 py-2 text-sm font-medium">
+              {config.hoverFactor}x
+            </div>
+            <StepButton onClick={() => set("hoverFactor", Math.max(1, config.hoverFactor - 1))}>−</StepButton>
+            <StepButton onClick={() => set("hoverFactor", Math.min(20, config.hoverFactor + 1))}>+</StepButton>
+          </div>
+          <p className="text-xs text-muted-foreground">Slows down the speed while you are hovering.</p>
+        </div>
+      </Field>
+    </div>
+  );
+}
+
+function TickerSettingsSection({ config, onChange }: { config: TickerConfig; onChange: (c: TickerConfig) => void }) {
+  const [activeRow, setActiveRow] = useState(0);
+
+  const updateRow = (i: number, row: TickerRowConfig) => {
+    const rows = [...config.rows] as [TickerRowConfig, TickerRowConfig, TickerRowConfig];
+    rows[i] = row;
+    onChange({ rows });
+  };
+
+  return (
+    <div className="space-y-3">
+      <div className="flex gap-1">
+        {[0, 1, 2].map((i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setActiveRow(i)}
+            className={`px-3 py-1.5 text-sm rounded-lg font-medium transition ${
+              activeRow === i
+                ? "bg-foreground text-background"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted"
+            }`}
+          >
+            Row {i + 1}
+          </button>
+        ))}
+      </div>
+      <TickerRowEditor
+        config={config.rows[activeRow]}
+        onChange={(row) => updateRow(activeRow, row)}
+      />
     </div>
   );
 }
