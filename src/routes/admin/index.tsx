@@ -608,6 +608,27 @@ function SettingsTab() {
               ))}
             </select>
           </Field>
+          <Field label="Portfolio grid columns">
+            <div className="flex gap-2">
+              {(["1", "2", "3", "4"] as const).map((n) => {
+                const active = (settings.grid_columns ?? "2") === n;
+                return (
+                  <button
+                    key={n}
+                    type="button"
+                    onClick={() => set("grid_columns", n)}
+                    className={`flex-1 py-2.5 rounded-xl border text-sm font-medium transition ${
+                      active
+                        ? "bg-foreground text-background border-foreground"
+                        : "border-border hover:bg-muted"
+                    }`}
+                  >
+                    {n}
+                  </button>
+                );
+              })}
+            </div>
+          </Field>
         </Section>
 
         <Section title="Footer">

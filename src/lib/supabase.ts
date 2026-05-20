@@ -38,6 +38,7 @@ export type SiteSettings = {
   footer_text: string;
   category_list: string; // JSON array stored as string
   ticker_settings: string; // JSON-encoded TickerConfig
+  grid_columns: string; // "1" | "2" | "3" | "4"
 };
 
 export type TickerRowConfig = {
